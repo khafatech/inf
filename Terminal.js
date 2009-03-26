@@ -100,6 +100,10 @@ com.lightandmatter.Terminal =
     inp.onkeypress = function(e) {
 
       var code = 0;
+
+      if (!e) { // IE
+        e = window.event;
+      }
       // IE has keyCode, Firefox has charCode
       try { code = e.charCode } catch (foo) {};
       try { code = e.keyCode  } catch (foo) {}; // ... but this doesn't even work in IE...??? I get 'keyCode' is null or not an object
