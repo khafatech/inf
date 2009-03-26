@@ -1,0 +1,295 @@
+goals:
+  Useful web-based calculator with mathml, spreadsheet, literate programming/comments.
+  Make it a js-based general-purpose programming language as well, for use in 221.
+  Reimplement Spotter's math on client side for efficiency. (Parsing of canned answers
+       will be implemented in server-side js.)
+  Fix intractable bugs in Spotter's parser:
+    - inability to force purely symbolic calculations, or to specify subsets of symbols
+    - printing error messages twice
+  Eliminate kludginess of the method I've used for integrating asciimath into spotter.
+       For on-the-fly performance, it may be necessary to build in special-purpose
+       techniques for parsing that omit some semantics, while doing just enough work
+       to produce decent display mathml.
+           E.g., input of "2+sinx/3" could be rendered without worrying
+           about how to lex "sinx" into "sin" and "x." Once they hit enter, the real parser could
+           go to work; the "x" would magically become italic, and a thin space would magically
+           appear between "sin" and "x."
+  Do almost nothing on server side, for performance. Basically the only functionality that
+    really needs to go through the server is saving files.
+  Graphing
+    exporting: csv, excel (Spreadsheet::WriteExcel)
+    implement on server side with, e.g., ploticus? ugh, load on server 
+    can this be done using a js canvas object?
+  Although some web apps emphasize wiki-style collaboration, from my pov as a teacher, it's
+    advantageous to make this _harder_, e.g., print out student's name on every graph, so they
+    can't just make multiple copies of a single graph.
+  Support vectors, e.g.,
+    a=[:1,2:]
+    b=[:3,4:]
+    a+b
+    >> (4,6)
+    b@0
+    >> 3
+    Fairly trivial to support matrices as nested arrays.
+  Easy to support hashes as well, and makes some other things easier:
+    {:b=7,c=2:}
+  conversions
+    to js (trivial, as long as I don't care about readability)
+    to asciimath and/or display mathml
+      currently works like this:
+        // exmaples: alpha1 -> alpha_(1) , mus -> mu_(s) , Ftotal -> F_(total)
+        // problems: operators like eq will get treated as variables, rendered as e_(q)
+        function format_variable_name(x) {
+          y = x.replace(/^(alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Alpha|Beta|Gamma|Delta|Epsilon|Zeta|$
+          if (y!=x) return y;
+          y = x.replace(/^(.)(.+)$/,"$1_($2)");
+          return y;
+        }
+      possible approaches:
+        1) Keep letting asciimath handle rendering for me, but hand it off to asciimath at a stage where I've already done
+           at least some lexing, so I know how to render symbols like mus. (Can give user some control over this, too, e.g., gui menu
+           with options for how to render mus.)
+
+By choosing the syntax appropriately, I can make it so that I can really do a pretty decent first-pass job of lexing
+with essentially a one-line regex match in JS. Basic version:
+    var alpha    = "[^\\u0021-\\u0040\\u005b-\\u0060\\u007b-\\u007e]"; // anything that's not ascii punctuation or digit
+    var word     = "[^\\u0021-\\u0026\\u0028-\\u002f\\u003a-\\u0040\\u005b-\\u005e\\u0060\\u007b-\\u007e]"; //  alphabetic|0-9|_|'
+    var name     = "(?:"+alpha+"(?:"+word+")*)";
+    var alpha_regex  = new RegExp("^"+alpha+"$");
+    var word_regex   = new RegExp("^"+word+"$");
+    var name_regex   = new RegExp("^"+name+"$");
+    tokens = source.match(new RegExp("("+name+"|.)"));
+Can lex units like "<1 m/s>" into single tokens, and similarly for numeric literals. Not much harder to
+do stuff like !!, ->, [:, {: --- just add those to the pattern, and they'll happen automatically, because
+regex takes the longest possible match.
+
+Parsing into display mathml at on-the-fly quality basically seems pretty trivial. Display @ as subscript,
+render <> as plain text inside (), render [::] and {::} as (), which isn't a big issue for human readibility,
+since we do well with ambiguity.
+Final, high-quality parsing into display mathml should do some fancier stuff:
+  -Eliminate unneeded parentheses in built-up fractions, superscripts, and subscripts.
+  -Parse implied mult, and stuff like sinx.
+  -Render atan as tan^-1, and sin2x as sin^2x (peepholer, doesn't matter if it always succeeds).
+  Design in some hooks for users to set preferences, e.g., some users may prefer arctan as a rendering.
+  Ditto for displaying variables. E.g., can guess that a variable called mus should be displayed as \mu_s,
+  but give the user the ability to override that guess.
+
+What isn't so easy to do
+on the fly is handling implied multiplication, but that isn't necessarily something I need to do on the fly.
+E.g., on-the-fly lexer can just display "musg" as-is, on one line, but after the user hits enter it can be
+typeset as the mathml equivalent of \mu_s g.
+
+Notes on high-quality lexing algorithms:
+Probabilistically, it's not that hard to write an algorithm that will usually get a solution very fast. What's
+harder is to prove that there is no solution, or to prove that the solution is unique or nonunique. Most
+algorithms you can come up with have a worst-case performance of n!k time for a string of length n with k
+possible tokens. Doing a plain old regex will always take longest match from the left (LFL), and this is
+a very cheap thing to do in js, and will usually work. It's also possible to to do LFR by reversing both
+the input string and the regex ("(foo|bar)" -> ("rab|oof")). These are smart things to try when you don't
+care about uniqueness, but essentially we always care about uniqueness. It's tempting to do a sloppy job for
+on-the-fly input, but in reality it would probably confuse the heck out of users on the times when it messed
+up.
+The following algorithm only takes something like kn+k^n log n time, and always tells us whether a match is unique, or definitively
+that there is no match:
+  Let c be the character in the middle of the string.
+  Make a list of every token which has character c in it. For each such token, try every possible way
+  it could sit on top of c. For example, if c is 'o' and the token is 'foo', then there are two possible
+  places the 'o' could lie. Check each of these possibilities, and recurse. The base in the k^n log n is really
+  the number of possibilities on this list, which may be more than k or (more likely) much less.
+This algorithm can probably be improved a lot by cutting down on the number of possibilities. For example,
+if 'z' is a character that is rare in tokens, then we may be better off doing the split at a 'z', rather than
+in the middle. So it's probably a big improvement to always split at the rarest char, especially if the char
+only occurs at one place in one token (or never occurs in any token, in which case we've proved it can't be
+lexed). Can also cut down on the number of possibilities by getting rid of all tokens that never occur in
+the actual string. If we can use this technique to cut it down to the point where there's typically only
+one such choice, then we basically have an O(n) algorithm.
+Finally, can just set an implementation limit on the maximum number of word characters that can appear in
+a row, e.g., 10 such characters. Still need to allow the special case where a single variable name has 12 characters.
+Better algorithm:
+  List every 2-character substring that occurs in every symbol in the symbol table, and keep stats on how many
+  occurrences there are (how many total places in all symbols). Go through input string, and list all 2-char
+  substrings in it as well; of these, find the one that's the least common in the symbol table. Find a place
+  that occurs in the input string, and check two possibilities:
+    1) Both chars really are part of the same token. Check all possible tokens that could fit on top of them.
+    2) These two characters aren't really part of the same token. Split the string between them.
+  This is much more efficient, because the least common 2-char strings are almost certain to be ones that
+  occur in 0 or 1 places in the symbol table.
+Even better, simpler:
+  List every place in the string where a token could fit. Start eliminating tokens that end in places where
+  no other token can begin, or that begin in places where no other token can end. Probably most efficient
+  if you make a table sorted by starting point, and another sorted by ending point; when one token comes
+  off, it then becomes fairly easy to find the consequences for the other tokens.
+Reality check:
+  The most straightforward thing to do is to set some simple rules:
+    - A "phrase" (sequence of characters that could be symbols) can only be max of 8 chars, unless the
+      whole phrase is a single variable name. User is required to break up longer strings with blanks.
+    - On phrases of length no greater than 4, the parser is guaranteed to check all possible interpretations,
+      and it's an error if there's an ambiguity.
+    - On phrases of length 5-8, parser will only ever try LFL and LFR. If exactly one of those works, it's not an error, and
+      the defined behavior of the language is to use that as the interpretation.
+    - Under certain circumstances, we do an optional rigorous check for ambiguity:
+         1. when strict mode is turned on, there's a "check" button, which yuo have to do first before you
+            can run your code; this is like a linter
+         2. when strict mode is turned off, you can still optionally click on the "check" button
+    - When a variable is implicitly or explicitly declared anywhere, its declaration applies everywhere in the
+      scope, including above the declaration. Every rigourous or nonrigorous lexing of a phrase is cached, with
+      hash keys that look like, e.g., "sin,cos,tan,x,y;sinx;sin x". When inserting a new symbol in the symbol table,
+      go through all of these, and if the new symbol is a substring of the cached phrase, update it, but otherwise
+      we know we can leave it alone. If the same string, wihch was successfully parsed before, is now parsed in
+      a different way, then we generate a warning to the user. The cache can be stored when you save the file.
+      (Awkward to have metadata stored in file, but worth it for the sake of efficiency.)
+No, wait. I don't want it to barf on all ambiguities. For instance, supposed you define a variable "a." If
+all ambiguities were considered errors, then you could never do the arcsine function, asin, because it could
+be parsed as "a sin." Similarly, defining variables s and n would make the sin function unusable, since there's
+a preexisting variable i. The simplest, best thing to do is to say that all implied mult expressions are lexed
+as LFR. Can do "check" button, in which case it will generate warnings about all possible alternative interps.
+More thoughts:
+  Can also define it as not an error if it fails with LFL, but succeeds with LFR, or I can say it's never an
+  error if it's unique.
+  It's probably a good idea to put metadata in the source code file. The metadata can cache computationally
+  expensive lexical analyses, and if the user clarifies his intention by clicking in the gui, can also
+  store that info in metadata.
+
+Have a typing system that deals with units. Every variable, once it's initialized, gets display units (e.g.,
+ft/s) and base units (m/s). Once a variable has certain base units, it can never be assigned a value with
+different base units. In other words, units of all values are known at compile time, and therefore the
+computation of the units can be done at compile time. Example:
+  y = <7 s>
+  a=x/y    ... compilation is deferred, because x hasn't been defined
+  x = 4 ft ... as soon as this is entered, we go back and compile a=x/y, and a's base type is locked in as m/s,
+               and the output of line 2 becomes .57 ft/s
+  In this sense, what I've designed is a type-inferring language.
+
+Cf fortress
+  faqs http://research.sun.com/projects/plrg/faq/index.html
+  http://fortress.sunsource.net/
+  preliminary version is an interpreter that runs on the jvm, code presently distributed only via svn
+  has operator overloading, which I sort of do and sort of don't
+  has interesting rules for display, like (expressed in tex) a3 -> a_3 , _a -> \vc{a} , a_ -> \zu{a} , a_max -> a_{max} , a_bar -> \bar{a}
+  has units, represented in expressions by trailing underscores, e.g., m_/s_
+  set {} , array <> , hash []
+  binding v = e , assignment v := e , generatoin v <- e
+  crazy whitespace sensitivity, e.g.  1 / 2 cos x = 1/(2cosx) and { |x| | x<-1:20} aaaaaaaaah!
+  loops are parallel by default
+  juxtaposition
+    can mean multiplication, function application, or string concatenation
+    library defines, e.g., that you can juxtapose two integers and the result is multiplication: opr juxtaposition(m:z64,n:z64)=m.times(n)
+  types
+    dim and units can be part of type
+  main designer is Guy Steele at sun (designed scheme and java)
+  cf. X10 and Chapel
+    quite a few of the comments on lambda-the-ultimate, http://lambda-the-ultimate.org/node/673 , center on dislike of juxtaposition
+
+should juxtaposition-multiplication have lower precedence than division?
+
+
+Offline parser can, e.g., render mu0 with a subscript, because we've told it that's how we want mu0 rendered.
+(It can try to guess.)
+
+How to avoid cluttering the namespace:
+  - use us_units;
+  - us_units\ft
+  - financial\interest(x,y)
+Functions can be user-defined. This is fairly easy. (see below)
+
+summary of syntax in the present version of spotter:
+  symbol := alphabetic|0-9|_|' (has to start with alpha; define alpha as a-zA-Z, c0-f6, f8-2af, 391-3a9, 3b1-3c9)
+  JS doesn't have a unicode \w like perl does, so define alphabetic by exclusion: it's anything that's not
+        ascii punctuation or digit, i.e. [^21-40, 5b-60, 7b-7e]
+  two-symbol operators: ** -> !!
+  ~ (both spotter and calculator)
+  # (calculator)
+changes:
+  to simplify parser:
+    get rid of **
+    Result is that pattern matching for unary functions is greatly simplified:
+      symbol | ! | !!
+    Regularize syntax by eliminating all infix operators with alphanumeric names,
+      replace them with functions, e.g., mod(3,2) rather than 3 mod 2
+  summary of characters:
+    used in old spotter, still used for same purpose:
+      ^ * / + - , # ! ( ) [ ] { } |
+      = (special case, not really an operator)
+    new
+      \   allowed in symbols, conventionally used for managing namespaces
+      <>  used around unit expressions
+      ?   used for what ~ used to be used for
+      :   used in constructing vectors and hashes
+      \   allowed in symbols
+      @   array and hash indexing (render using subscripts)
+      //  non-built-up fraction, as in asciimath -- note incompatibility with js-style comments;
+          requires handling before Narcissus (I'm using # for comments, can also allow /* */ style)
+    not used yet
+      ` $ % & ; " 
+embedding in js:
+  The hard part is that I have to write a js parser for js syntax.
+  Aha! Mozilla has a js parser written in js, called Narcissus:
+    http://lxr.mozilla.org/mozilla/source/js/narcissus/jsparse.js
+  (Someone also did a ruby port.)
+  It's only 1000 lines of code, and licensing is MPL/GPL/LGPL.
+  I haven't studied the code all that carefully, but it looks like it parses js into a tree
+  structure.
+  Possible approaches:
+    1) make my whole parser be a modified version of Narcissus
+    2) cut down Narcissus so all it accomplishes is to parse down to the expression level.
+  JS theoretically makes semicolons optional anyway, so just make that the norm for my language.
+
+note:
+  JS apparently has constants:
+  const FOO = 7;
+  Does this help me to make rpn evaluation more efficient?
+
+random thoughts about implementation:
+
+For the switch-over, I'd need to have a test suite, and in fact I already have such
+a test suite, in the form of the  many cached results sitting in spotter's cache dir.
+Would I want to split parsing up into separate symbolic and nonsymbolic cases?
+
+For numerical problems, I really don't want arbitrary expressions anyway; I want them
+in a standardized format, which would allow me to check sig figs. For symbolic problems,
+the stuff about units makes the lexer and parser horribly complicated. OTOH, it would
+be cool to have mixed expressions for a calculator. Maybe the best approach would be
+to have a special syntax for mixed expressions, e.g., `1 m/s`. Doing this would vastly
+simplify the logic of the parser. A middle ground would be to require parentheses around
+all unitful expressions when they occur inside some other expression; this is good style
+anyway, and would probably be almost as easy to parse. Possible syntaxes:
+  `1 m/s` ... uses up an ascii char
+  (#1 m/s#) ... ugly
+  1~m/s ... uses up an ascii char; can think of ~ as sort of a prefix operator, although I
+            probably wouldn't want to implement it that way
+An infix operator like ~ is probably easier to type and to read, but maybe a little
+harder to parse. What about, e.g., a common idiom like
+  3.5 10^5 m/s  ?
+  3.5 10^5 `m/s` ... not too bad
+  3.5 10^5~m/s ... also decent
+
+A js parser could parse into functions, e.g., the result of "x+y" would be
+"function(vars) {return vars.x+vars.y}". This gets a little messier with complex
+numbers, or numbers with units, more like "function(vars) {return vars.x.plus(vars.y)}"
+This is nice, because it naturally supports a symbolic-first style of calculation:
+  a=b/c ... defines a function a(b,c), but doesn't evaluate it yet, since b & c are undefined
+  b=6
+  a
+  >> b/c ... still not ready to evaluate it, just spits back its source code
+  c=2
+  a
+  >> 3 ... evaluates it
+  a{:b=7,c=2:}
+  >> 3.5
+The problem here is how to handle something like a=bc/d, where we don't know whether
+bc represents b*c, or a single variable called bc. Probably the best way to handle this
+would be generate a display version of the equation in mathml, but defer parsing it
+until the ambiguity is cleared up. If it's going to be integrated with js, could also
+allow the js syntax for declaring variables without necessarily giving them values.
+
+Browser-based js shells:
+  http://www.squarefree.com/shell/?ignoreReferrerFrom=shell1.4 (GPL/LGPL/MPL license)
+  http://mochikit.com/examples/interpreter/index.html (MIT license, http://mochikit.com/about.html)
+Making things easier for students:
+  sqrt = Math.sqrt; // supply this as a global
+  pow = Math.pow; // exponentiation
+
+LP
+  combine source and doc in single file
+  2 languages, e.g., C and TeX -- for me, Spotter and HTML
+  logical and/or hierarchical order, outlining

@@ -1,0 +1,111 @@
+<html>
+<head><title>Inf -- a calculator that can handle infinite and infinitesimal numbers</title></head>
+<body onload = "set_up();">
+
+<h1>Inf</h1>
+<p>Inf is a calculator that can handle infinite and infinitesimal numbers. For documentation, scroll down.</p>
+
+<div id="debug"></div>
+<div id="debug2"></div>
+<div id="terminal" style="width:100%; height:600px;"></div>
+
+
+  <script src="Terminal.js"></script>
+  <script src="Lexer.js"></script>
+  <script src="Parser.js"></script>
+  <script src="Complex.js"></script>
+  <script src="Rational.js"></script>
+  <script src="LeviCivita.js"></script>
+  <script>
+    function set_up() {
+      var lexer = new com.lightandmatter.Lexer({});
+      var parser = new com.lightandmatter.Parser({});
+      var terminal = new com.lightandmatter.Terminal({
+        'container':document.getElementById("terminal"),
+        'response':(function(terminal) {
+          parser.parse(lexer.tokens,lexer.props);
+          //return "Your input was "+parser.to_debug_string()+' -->> '+parser.toString();
+          return parser.toString();
+        }),
+        'when_changed':(function(t) {
+          // document.getElementById("debug").innerHTML="Debugging: "+lexer.toString();
+          lexer.change_text(t);
+         })
+      });
+    }
+  </script>
+
+<h2>About Inf</h2>
+
+<p>
+Inf is a calculator that can handle infinite and infinitesimal numbers.
+</p>
+<p>
+Predefined constants:
+<ul>
+<li> i -- the square root of -1
+<li> pi -- the ratio of a circle's circumference to its diameter
+<li> d -- an infinitesimally small number
+</ul>
+</p>
+<p>
+Built-in operators:
+<ul>
+<li> : -- assigns the expression on the right to the variable named on the left-hand side
+<li> =, <, > -- comparisons
+<li> +, -, *, / -- arithmetic
+<li> ^ -- exponentiation
+</ul>
+</p>
+<p>
+Built-in functions:
+<ul>
+<li> sin, cos, tan
+<li> asin, acos, atan
+<li> sqrt, abs
+<li> exp, ln
+<li> floor, ceil
+</ul>
+</p>
+<p>
+Inf represents infinite and infinitesimal quantities as <a href="http://en.wikipedia.org/wiki/Levi-Civita_field">Levi-Civita numbers</a>.
+The Levi-Civita numbers obey all the same <a href="http://en.wikipedia.org/wiki/First-order_logic">elementary</a> axioms of arithmetic as the real numbers.
+If you try evaluating the expression 1/0, you'll see that it comes up as undefined, not an infinite number. This is because one of the elementary
+axioms of arithmetic is that division by zero is undefined. To get an infinite result, you could do something like 1/d, where d is the symbol
+built in to the calculator to represent one particular infinitesimal number. Another thing that
+can be proved from the elementary axioms of arithmetic is that if x is greater than zero, then 2x is greater than x. This applies to
+Levi-Civita numbers as well, so infinite and infinitesimal numbers have to come in different sizes. In particular, there isn't
+anything in the Levi-Civita system that plays the role of &infin;, which is usually used as a generic symbol for infinity.
+</p>
+<p>
+Here are some examples you can try in the calculator to get a feeling for how all this works:
+<ul>
+<li> 1/0 ... undefined
+<li> 1/d ... gives an infinite result
+<li> 2/d ... a bigger infinity
+<li> 2/d+1 ... and an even bigger infinity
+<li> d>0 ... true
+<li> d<10^-10 ... true
+<li> d^2<d ... true, showing that we have different sizes of infinity
+<li> d^2>0 ... true, because even though d^2 is infinitesimally small compared to d, it's still no zero
+<li> sqrt(d)
+<li> sqrt(d)>d ... true
+<li> 1/(1-d) ... is calculated using the <a href="http://en.wikipedia.org/wiki/Geometric_series">geometric series</a>, up to a certain level of precision
+<li> exp(d) ... is calculated using a <a href="http://en.wikipedia.org/wiki/Taylor_series">Taylor series</a>
+<li> exp(1/d) ... is undefined in the Levi-Civita system
+</ul>
+</p>
+<p>
+Calculus students often get the impression that the notion of an infinite or infinitesimal number can never be defined in any rigorous or
+self-consistent way. That's not true. Tullio Levi-Civita defined the Levi-Civita numbers around 1900, so it's been known for over a
+century that there were rigorously definable number systems that included infinities. Abraham Robinson defined another such number system,
+the hyperreal numbers, around 1960. The hyperreals match the properties of the real numbers even better than the Levi-Civita numbers do.
+For example, the exponential function can take a positive infinite argument in the hyperreal system, but that doesn't work in the Levi-Civita
+numbers. However, the hyperreals cannot be conveniently represented on a computer. Great mathematicians like Newton, Gauss, and Euler used
+infinitesimals, and now that modern mathematicians like Levi-Civita and Robinson have put infinitesimals on a more rigorous footing, there's
+no reason to shy away from them.
+To learn more about the application of infinitesimals
+to calculus, see my <a href="http://www.lightandmatter.com/calc/">free calculus book</a>.
+</p>
+</body>
+</html>
