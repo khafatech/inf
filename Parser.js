@@ -205,11 +205,11 @@ com.lightandmatter.Parser =
         }
         if (op=='-') {
           if (t=='r') {return a-b;}
-          if (t=='c') {return a.sub(b);}
+          if (t=='c' || t=='l') {return a.sub(b);}
         }
         if (op=='*') {
           if (t=='r') {return a*b;}
-          if (t=='c') {return a.mul(b);}
+          if (t=='c' || t=='l') {return a.mul(b);}
         }
         if (op=='/') {
           if (t=='r') {
@@ -272,6 +272,9 @@ com.lightandmatter.Parser =
       if (tx==ty) {return [tx,x,y];}
       if (tx=='r' && ty=='c') {return ['c',com.lightandmatter.Complex(x,0),y];}
       if (tx=='c' && ty=='r') {return ['c',x,com.lightandmatter.Complex(y,0)];}
+      if (tx=='l' && (ty=='r' || ty=='c')) { return ['l',x,com.lightandmatter.LeviCivita(y,0,[[0,1]])];}
+      if (ty=='l' && (tx=='r' || tx=='c')) { return ['l',com.lightandmatter.LeviCivita(x,0,[[0,1]]),y];}
+      if (ty=='l' && (tx=='r' || tx=='c')) { return promote(y,x);}
       return [null,null,null,["unable to do type promotion, types="+tx+','+ty]];
     };
 
@@ -281,6 +284,10 @@ com.lightandmatter.Parser =
       if (x.mytype == 'c') {return 'c';} // complex
       if (x.mytype == 'l') {return 'l';} // Levi-Civita
       return null;
+    };
+
+    var debug = function(s) {
+      document.getElementById("debug").innerHTML=document.getElementById("debug").innerHTML+' '+s+' ';
     };
 
   };
