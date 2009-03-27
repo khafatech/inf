@@ -11,6 +11,7 @@
 //    assignment operator returns lhs, and has side-effect of carrying out assignment
 // to do:
 //    implement trig and inverse trig functions for complex args
+//    prohibit assignment into constants
 
 var com;
 if (!com) {com = {};}
@@ -18,7 +19,8 @@ if (!com.lightandmatter) {com.lightandmatter = {};}
 
 
 com.lightandmatter.Parser =
-  function (args) {
+  function () {
+    this.nn = com.lightandmatter.Num;
     // in order from lowest to highest precedence:
     this.binop = [
       {'name':':'},
@@ -181,52 +183,8 @@ com.lightandmatter.Parser =
           return b;
         }
         var a = this.tree_to_string(tree[2]); // left-hand side
-        var prom = promote(a,b);
-        var t = prom[0];
-        a = prom[1];
-        b = prom[2];
-        if (t!='r' && t!='c' && t!='l') {
-          this.errs.push(["illegal number type: "+t],start,end);
-          return null;
-        }
-        if (op=='=') {
-          if (t=='r') {return a==b;}
-          if (t=='c') {return a.eq(b);}
-        }
-        if (op=='<') {
-          if (t=='r') {return a<b;}
-        }
-        if (op=='>') {
-          if (t=='r') {return a>b;}
-        }
-        if (op=='+') {
-          if (t=='r') {return a+b;}
-          if (t=='c' || t=='l') {return a.add(b);}
-        }
-        if (op=='-') {
-          if (t=='r') {return a-b;}
-          if (t=='c' || t=='l') {return a.sub(b);}
-        }
-        if (op=='*') {
-          if (t=='r') {return a*b;}
-          if (t=='c' || t=='l') {return a.mul(b);}
-        }
-        if (op=='/') {
-          if (t=='r') {
-            if (b===0.0) {return NaN;}
-            return a/b;
-          }
-          if (t=='c') {return a.div(b);}
-        }
-        if (op=='^') {
-          if (t=='r') {
-            if (a===0 && b===0) {return NaN;}
-            if (a===0 && b<0) {return NaN;}
-            return Math.pow(a,b);
-          }
-          if (t=='c') {return a.pow(b);}
-        }
-        this.errs.push(["The binary operator "+op+" is not implemented for variables of type "+describe_type(t),start,end]);
+        return this.nn.binop(op,a,b);
+        this.errs.push(["The binary operator "+op+" is not implemented for variables of type "+this.nn.describe_type(t),start,end]);
         return null;
       }
       if (what==='unop') {
@@ -234,20 +192,36 @@ com.lightandmatter.Parser =
         var start = tree[3]; // for error messages, if necessary
         var end = tree[4];
         var x = this.tree_to_string(tree[2]);
-        var t = num_type(x);
+        var t = this.nn.num_type(x);
         if (x===null) {return null;}
         for (var i in this.unop) {
           if (this.unop[i].name==f) {
             var ff;
-            if (t=='r' && f=='ln' && x<0.0) {t='c'; x=com.lightandmatter.Complex(x,0.0); }
             if (t=='r') {
               ff = this.unop[i].func;
             }
             else {
               ff = x[this.unop[i].cfunc];
             }
-            if (ff===undefined) {this.errs.push(["The function "+f+" is not implemented for variables of type "+describe_type(t),start,end]); return null;}
-            return ff(x);
+            if (ff===undefined) {this.errs.push(["The function "+f+" is not implemented for variables of type "+this.nn.describe_type(t),start,end]); return null;}
+            var y;
+            try {
+              y = ff(x);
+            }
+            catch (foo) {};
+            if (y!==undefined && y!==null && !(typeof(y)=='number' && (isNaN(y) || !isFinite(y)))) {
+              return y;
+            }
+            else {
+              if (t=='r') {  // happens, e.g., ln(-1) or sqrt(-1) or asin(3)
+                x = com.lightandmatter.Complex(x,0.0);
+                ff = x[this.unop[i].cfunc];
+                return ff(x); 
+              }
+              else {
+                return NaN;
+              }
+            } 
           }
         }
       }
@@ -257,33 +231,6 @@ com.lightandmatter.Parser =
     this.props_to_string = function(props) {
       if (props===undefined) {return null;}
       return 'name='+props.name+', num='+props.num;
-    };
-
-    var describe_type = function(t) {
-      if (t=='r') {return 'real';}
-      if (t=='c') {return 'complex';}
-      if (t=='l') {return 'Levi-Civita';}
-      return t;
-    };
-
-    var promote = function(x,y) {
-      var tx = num_type(x);
-      var ty = num_type(y);
-      if (tx==ty) {return [tx,x,y];}
-      if (tx=='r' && ty=='c') {return ['c',com.lightandmatter.Complex(x,0),y];}
-      if (tx=='c' && ty=='r') {return ['c',x,com.lightandmatter.Complex(y,0)];}
-      if (tx=='l' && (ty=='r' || ty=='c')) { return ['l',x,com.lightandmatter.LeviCivita(y,0,[[0,1]])];}
-      if (ty=='l' && (tx=='r' || tx=='c')) { return ['l',com.lightandmatter.LeviCivita(x,0,[[0,1]]),y];}
-      if (ty=='l' && (tx=='r' || tx=='c')) { return promote(y,x);}
-      return [null,null,null,["unable to do type promotion, types="+tx+','+ty]];
-    };
-
-    var num_type = function(x) {
-      if (x===null) {return null;}
-      if (typeof(x)=='number') {return 'r';} // real
-      if (x.mytype == 'c') {return 'c';} // complex
-      if (x.mytype == 'l') {return 'l';} // Levi-Civita
-      return null;
     };
 
     var debug = function(s) {
