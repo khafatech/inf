@@ -67,17 +67,17 @@ com.lightandmatter.Num.binop = function(op,a,b) {
         if (t!='r' && t!='c' && t!='l' && t!='q') {
           return null;
         }
-        if (op=='=') {
-          if (t=='r') {return a==b;} else {return a.eq(b);}
-        }
         if (op=='cmp') {
           if (t=='r') {return a-b;} else {return a.cmp(b);}
         }
+        if (op=='=') {
+          if (t=='r') {return a==b;} else {return a.eq(b);} // Complexes have = but not cmp.
+        }
         if (op=='<') {
-          if (t=='r') {return a<b;}
+          if (t=='r') {return a<b;} else {return a.cmp(b)<0;}
         }
         if (op=='>') {
-          if (t=='r') {return a>b;}
+          if (t=='r') {return a>b;} else {return a.cmp(b)>0;}
         }
         if (op=='+') {
           if (t=='r') {return a+b;} else {return a.add(b);}

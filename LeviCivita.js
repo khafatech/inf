@@ -35,7 +35,7 @@ com.lightandmatter.LeviCivita =
       return x;
     };
     c.zero = function () {
-      return com.lightandmatter.LeviCivita(0.0,0,[[0,1]]);
+      return com.lightandmatter.LeviCivita(0.0,0);
     }
     c.toString = function() {
       var l = [];
@@ -80,7 +80,75 @@ com.lightandmatter.LeviCivita =
     };
     c.sub = function (b) {
       return c.add(b.neg()); // add() handles tidying
-    }
+    };
+    c.is_real = function () {
+      if (com.lightandmatter.Num.num_type(c.f)=='c' && c.f.y!==0) {return false}
+      for (var i=0; i<c.s.length; i++) {
+        var a = c.s[i][1];
+        if (com.lightandmatter.Num.num_type(a)=='c' && a.y!==0) {return false}
+      }
+      return true;
+    };
+    c.eq = function(b) {
+      if (c.f != b.f) {return false;}
+      if (c.l != b.l) {return false;}
+      if (c.s.length != b.s.length) {return false;}
+      for (var i in c.s) {
+        if (!c.nn.binop('=',c.s[i][0],b.s[i][0])) {return false;}
+        if (!c.nn.binop('=',c.s[i][1],b.s[i][1])) {return false;}
+      }
+      return true;
+    };
+    c.cmp = function (b) {
+      if (!(c.is_real() && b.is_real())) {return null}
+      if (c.f===0 && b.f===0) {return 0;}
+      if ((c.f===0 && b.f!==0) || (c.f!==0 && b.f===0)) {return c.nn.binop('cmp',c.f,b.f);}
+      // From this point on, we know they're both real, and both nonzero.
+      var ll = c.nn.binop('cmp',c.l,b.l);
+      if (ll!==0) {return -ll;}
+      var ff = c.nn.binop('cmp',c.f,b.f);
+      if (ff!==0) {return ff;}
+      return c.nn.binop('cmp',c.nn.binop('-',c,b),0);
+    };
+    c.eps_part = function() { // return the part of the series that's infinitesimal compared to the leading term
+      var e = c.clone();
+      e.f = 1;
+      e.l = 0;
+      return c.nn.binop('-',1,e);
+    };
+    c.expand = function(t) { // expand a Taylor series; t is an array containing the coefficients
+      var s = c.zero();
+      var pow = com.lightandmatter.LeviCivita(1,0); // =c^i
+      var m = t.length;
+      for (var i=0; i<m; i++) {
+        var term = c.nn.binop('*',t[i],pow);
+        //c.debug('term '+i+'='+term+' ');
+        s = c.nn.binop('+',s,term);
+        //c.debug('s='+s+' ');
+        if (i<m-1) {pow = c.nn.binop('*',pow,c);}
+      }
+      //c.debug('total='+s+' ');
+      return s;
+    };
+    c.generate_taylor = function (f) {
+      var m = com.lightandmatter.LeviCivita.n;
+      var t = [];
+      for (var i=0; i<m; i++) {
+        t.push(f(i));
+      }
+      return t;
+    };
+    c.inv = function() {
+      var z = c.clone();
+      z.f = c.nn.binop('/',1,z.f);
+      z.l = c.nn.binop('-',0,z.l);
+      z.s = [[0,1]];
+      // reduce it to inverting 1/(1-e):
+      return c.nn.binop('*',z,c.eps_part().expand(c.generate_taylor(function(i){return 1;})));
+    };
+    c.div = function (b) {
+      return c.nn.binop('*',c,b.inv());
+    };
     c.mul = function (b) {
       var z = com.lightandmatter.LeviCivita(c.nn.binop('*',b.f,c.f),c.nn.binop('+',b.l,c.l));;
       z.s = [];
