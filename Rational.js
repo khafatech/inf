@@ -1,4 +1,4 @@
-// Complex.js
+// Rational.js
 // (c) 2009 B. Crowell, GPL 2 license
 //
 // This file provides a constructor, com.lightandmatter.Rational.
@@ -20,6 +20,10 @@ com.lightandmatter.Rational =
 
     c.clone = function (notidy) {return com.lightandmatter.Rational(c.x,c.y,notidy); };
     c.eq = function (b) {return c.x!==null && c.y!=null && c.x*b.y==c.y*b.x; };
+    c.cmp = function (b) {
+      if (c.x===null || c.y===null) {return null;}
+      return c.x*b.y-b.x*c.y; // works because y's are guaranteed positive
+    };
     c.mul = function (b) { return com.lightandmatter.Rational(c.x*b.x,c.y*b.y); };
     c.div = function (b) { if (b.x==0) {return NaN;} return com.lightandmatter.Rational(c.x*b.y,c.y*b.x); };
     c.neg = function () { return com.lightandmatter.Rational(-c.x,c.y); };
@@ -27,6 +31,7 @@ com.lightandmatter.Rational =
     c.sub = function (b) { return c.add(b.neg()); };
 
     c.toString = function() {
+      if (c.y==1) {return c.x.toString()}
       return c.x + '/' + c.y;
     };
     c.toNumber = function() {

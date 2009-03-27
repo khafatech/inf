@@ -60,6 +60,7 @@ com.lightandmatter.Num.promote = function(x,y) {
 
 com.lightandmatter.Num.binop = function(op,a,b) {
         var nn = com.lightandmatter.Num;
+        var original_b = b;
         var prom = nn.promote(a,b);
         var t = prom[0];
         a = prom[1];
@@ -99,6 +100,7 @@ com.lightandmatter.Num.binop = function(op,a,b) {
           }
         }
         if (op=='^') {
+          if (t=='l') {b = original_b;}
           if (t=='r') {
             if (a===0 && b===0) {return NaN;}
             if (a===0 && b<0) {return NaN;}

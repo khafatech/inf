@@ -38,23 +38,26 @@ com.lightandmatter.LeviCivita =
       return com.lightandmatter.LeviCivita(0.0,0);
     }
     c.toString = function() {
+      if (c.f===0) {return '0'}
       var l = [];
-      for (var i in c.s) {
+      for (var i=0; i<c.s.length && i<com.lightandmatter.LeviCivita.n_display; i++) {
         var q = c.s[i][0];
         var a = c.s[i][1];
         var power = c.nn.binop('+',q,c.l);
         var coeff = c.nn.binop('*',c.f,a);
-        var s = coeff.toString();
-        if (c.nn.num_type(coeff)!='r' && s.length>1) {
-          s = '('+s+')';
+        if (coeff!==0) {
+          var s = coeff.toString();
+          if (c.nn.num_type(coeff)!='r' && s.length>1) {
+            s = '('+s+')';
+          }
+          var p0 = c.nn.binop('=',power,0);
+          var p1 = c.nn.binop('=',power,1);
+          if (s=='1' && !p0) {s='';}
+          if (s=='-1' && !p0) {s='-';}
+          if (!p0) {s = s + 'd';}
+          if (!p0 && !p1) {s = s + '<sup>' + power + '</sup>';}
+          l.push(s);
         }
-        var p0 = c.nn.binop('=',power,0);
-        var p1 = c.nn.binop('=',power,1);
-        if (s=='1' && !p0) {s='';}
-        if (s=='-1' && !p0) {s='-';}
-        if (!p0) {s = s + 'd';}
-        if (!p0 && !p1) {s = s + '<sup>' + power + '</sup>';}
-        l.push(s);
       }
       return l.join('+');
     };
@@ -75,6 +78,7 @@ com.lightandmatter.LeviCivita =
         //c.debug("...result = "+a);
         z.s.push([q,a]);
       }
+      //c.debug("before tidying, z="+z+' ');
       z.tidy();
       return z;
     };
@@ -114,7 +118,7 @@ com.lightandmatter.LeviCivita =
       var e = c.clone();
       e.f = 1;
       e.l = 0;
-      return c.nn.binop('-',1,e);
+      return c.nn.binop('-',e,1);
     };
     c.expand = function(t) { // expand a Taylor series; t is an array containing the coefficients
       var s = c.zero();
@@ -130,6 +134,22 @@ com.lightandmatter.LeviCivita =
       //c.debug('total='+s+' ');
       return s;
     };
+    c.mul = function (b) {
+      var z = com.lightandmatter.LeviCivita(c.nn.binop('*',b.f,c.f),c.nn.binop('+',b.l,c.l));;
+      z.s = [];
+      for (var i in b.s) {
+        for (var j in c.s) {
+          var q = c.nn.binop('+',b.s[i][0],c.s[j][0]);
+          var a = c.nn.binop('*',b.s[i][1],c.s[j][1]);
+          z.s.push([q,a]);
+        }
+      }
+      z.tidy();
+      return z;
+    };
+    c.sq = function () {
+      return c.mul(c);
+    }
     c.generate_taylor = function (f) {
       var m = com.lightandmatter.LeviCivita.n;
       var t = [];
@@ -144,23 +164,75 @@ com.lightandmatter.LeviCivita =
       z.l = c.nn.binop('-',0,z.l);
       z.s = [[0,1]];
       // reduce it to inverting 1/(1-e):
-      return c.nn.binop('*',z,c.eps_part().expand(c.generate_taylor(function(i){return 1;})));
+      return c.nn.binop('*',z,c.eps_part().neg().expand(c.generate_taylor(function(i){return 1;})));
     };
     c.div = function (b) {
       return c.nn.binop('*',c,b.inv());
     };
-    c.mul = function (b) {
-      var z = com.lightandmatter.LeviCivita(c.nn.binop('*',b.f,c.f),c.nn.binop('+',b.l,c.l));;
-      z.s = [];
-      for (var i in b.s) {
-        for (var j in c.s) {
-          var q = c.nn.binop('+',b.s[i][0],c.s[j][0]);
-          var a = c.nn.binop('*',b.s[i][1],c.s[j][1]);
-          z.s.push([q,a]);
+    c.int_pow = function(p) { // c^p, p is an integer; for internal use only; check for 0^0 before calling this function
+        // Do these first for efficiency in the case of largish exponents, calling recursively:
+        if (p===0) {return com.lightandmatter.LeviCivita(1.0,0.0);} // 0^0 not allowed as input
+        if (p==1) {return c;}
+        if (p==2) {return c.sq();}
+        if (c.f===0) {
+          if (p>0) {return 0;}
+          if (p<0) {return NaN;}
         }
+        // From here on, we know that neither c nor p is zero.
+        if (p<0) {return c.int_pow(-p).inv();}
+        // If we get to here, p is >=3 and the base c is nonzero.
+        var m = Math.floor(p/2.0);
+        var n = p-2*m; // may be 0 or 1
+        return c.int_pow(m).sq().mul(c.int_pow(n));
+    };
+    c.pow = function(b) { // b must be integer or Rational
+      if (c.nn.num_type(c)=='r' && isNaN(c)) {return NaN;}
+      //c.debug('c='+c+', b='+b);
+      var bt = c.nn.num_type(b);
+      //c.debug('bt='+bt);
+      if (bt!='r' && bt!='q') {return NaN;}
+      if (bt=='r') {
+        if (b!=Math.floor(b)) {return NaN;}
+        if (c.f===0 && b===0) {return NaN;}
+        return c.int_pow(b);
       }
-      z.tidy();
-      return z;
+      if (bt=='q') {
+        if (b.x!=1) {return c.int_pow(b.x).pow(com.lightandmatter.Rational(1,b.y));}
+        var p = 1/b.y;
+        var z = c.clone();
+        z.f = c.nn.binop('^',z.f,p);
+        z.l = c.nn.binop('/',z.l,b.y);
+        z.s = [[0,1]];
+        // t = 1,p,p*(p-1)/2,p*(p-1)*(p-2)/6,...
+        var m = com.lightandmatter.LeviCivita.n;
+        var t = [];
+        u = 1;
+        for (var i=0; i<m; i++) {
+          t.push(u);
+          u=u*(p-i)/(i+1);
+        }
+        return c.nn.binop('*',z,c.eps_part().expand(t));
+      }
+    };
+    c.exp = function() { // I think it doesn't make sense unless c.f is rational.
+        if (c.nn.binop('cmp',c.l,0)<0) {return NaN;}
+        var ft = c.nn.num_type(c.f);
+        if (ft!='r' && ft!='q') {return NaN;}
+        if (ft=='r' && c.f!=Math.floor(c.f)) {return NaN;}
+        var z = c.clone();
+        if (c.nn.binop('cmp',z.f,0)!==1) {z.f=1; return z.exp().pow(c.f);}
+        // From now on, we're guaranteed that z.f is 1.
+        var m = com.lightandmatter.LeviCivita.n;
+        var t = []; // = 1, 1, 1/2, 1/6, ..., 1/n!, ...
+        u = 1;
+        for (var i=0; i<m; i++) {
+          t.push(com.lightandmatter.Rational(1,u));
+          u=u*(i+1);
+        }
+        return z.expand(t);
+    };
+    c.sqrt = function() {
+      return c.pow(com.lightandmatter.Rational(1,2));
     };
     c.tidy = function() {
       c.s.sort(function(a,b) {return c.nn.binop('cmp',a[0],b[0])});
@@ -189,7 +261,8 @@ com.lightandmatter.LeviCivita =
       //c.debug('new front = '+c.f);
       for (var i=0; i<c.s.length; i++) {
         c.s[i][1] = c.nn.binop('/',c.s[i][1],k);
-        //c.debug('new a = '+c.s[i][1].tidy());
+        if (c.nn.num_type(c.s[i][1])=='q') {c.s[i][1]=c.s[i][1].tidy()}
+        //c.debug('new a = '+c.s[i][1]);
       }
     };
 
@@ -201,4 +274,7 @@ com.lightandmatter.LeviCivita =
 
   };
 
-com.lightandmatter.LeviCivita.n = 6; // number of terms to keep in the series
+com.lightandmatter.LeviCivita.n = 10; // number of terms to keep in the series
+com.lightandmatter.LeviCivita.n_display = 5; // only display this many, so the user isn't likely to see the results of truncation
+// I think n should be twice as big as n_display in most cases. Test with, e.g., sqrt(d+d^2)^2.
+// Would probably be better to maintain explicit error bounds.
