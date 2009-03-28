@@ -4,7 +4,7 @@
 // This file provides a constructor, com.lightandmatter.LeviCivita.
 //
 // to do:
-//   (1+i)*d doesn't work, because I'm multiplying a_q's using *; all operations on a's should accomodate complex numbers
+//   implement ln, inverse trig
 
 var com;
 if (!com) {com = {};}
@@ -84,14 +84,6 @@ com.lightandmatter.LeviCivita =
     c.sub = function (b) {
       return c.add(b.neg()); // add() handles tidying
     };
-    c.is_real = function () {
-      if (com.lightandmatter.Num.num_type(c.f)=='c' && c.f.y!==0) {return false;}
-      for (var i=0; i<c.s.length; i++) {
-        var a = c.s[i][1];
-        if (com.lightandmatter.Num.num_type(a)=='c' && a.y!==0) {return false;}
-      }
-      return true;
-    };
     c.eq = function(b) {
       if (c.f != b.f) {return false;}
       if (c.l != b.l) {return false;}
@@ -101,6 +93,20 @@ com.lightandmatter.LeviCivita =
         if (!c.nn.binop('=',c.s[i][1],b.s[i][1])) {return false;}
       }
       return true;
+    };
+    c.is_real = function() {
+      if (!c.nn.is_real(c.f)) {return false;}
+      for (var i in c.s) {
+        if (!c.nn.is_real(c.s[i][1])) {return false;}
+      }
+      return true;
+    };
+    c.force_real = function () {
+      if (!c.nn.is_real(c.f)) {c.f=c.f.x;}
+      for (var i in c.s) {
+        if (!c.nn.is_real(c.s[i][1])) {c.s[i][1].y=0;}
+      }
+      c.tidy();
     };
     c.cmp = function (b) {
       if (!(c.is_real() && b.is_real())) {return null;}
@@ -180,37 +186,39 @@ com.lightandmatter.LeviCivita =
         var n = p-2*m; // may be 0 or 1
         return c.int_pow(m).sq().mul(c.int_pow(n));
     };
-    c.pow = function(b) { // b must be integer or Rational
+    c.pow = function(b) { // b must be integer or Rational unless c.l==0
       if (c.nn.num_type(c)=='r' && isNaN(c)) {return NaN;}
       //c.debug('c='+c+', b='+b);
       var bt = c.nn.num_type(b);
       //c.debug('bt='+bt);
       if (bt!='r' && bt!='q') {return NaN;}
       if (bt=='r') {
-        if (b!=Math.floor(b)) {return NaN;}
         if (c.f===0 && b===0) {return NaN;}
-        return c.int_pow(b);
+        if (b==Math.floor(b)) {return c.int_pow(b);} else {if (c.l!==0) {return NaN;}}
       }
-      if (bt=='q') {
-        if (b.x!=1) {return c.int_pow(b.x).pow(com.lightandmatter.Rational(1,b.y));}
-        var p = 1/b.y;
-        var z = c.clone();
-        z.f = c.nn.binop('^',z.f,p);
-        z.l = c.nn.binop('/',z.l,b.y);
-        z.s = [[0,1]];
-        // series = 1,p,p*(p-1)/2,p*(p-1)*(p-2)/6,...
-        var f = function(i,u) { if (i===0) { return 1; } else { return u*(p-i+1)/i; } };
-        return c.nn.binop('*',z,c.eps_part().expand(com.lightandmatter.LeviCivita.generate_taylor(f)));
+      if (bt=='q' && b.x!=1) {
+        return c.int_pow(b.x).pow(com.lightandmatter.Rational(1,b.y));
       }
+      var p;
+      if (bt=='r') {p=b;}
+      if (bt=='q') {p=b.x/b.y;}
+      // series = 1,p,p*(p-1)/2,p*(p-1)*(p-2)/6,...
+      var f = function(i,u) { if (i===0) { return 1; } else { return u*(p-i+1)/i; } };
+      t = com.lightandmatter.LeviCivita.generate_taylor(f);
+      var z = c.clone();
+      z.f = c.nn.binop('^',z.f,p);
+      if (!c.nn.is_zero(z.l)) {z.l = c.nn.binop('/',z.l,b.y);} // if z.l is nonzero, we're guaranteed that b is rational
+      z.s = [[0,1]];
+      return c.nn.binop('*',z,c.eps_part().expand(t));
     };
-    c.exp = function() { // I think it doesn't make sense unless magnitude of c.f is rational.
+    c.exp = function() { // I think it doesn't make sense if magnitude of c.f is not rational and c.l!=0
         if (c.nn.binop('cmp',c.l,0)<0) {return NaN;}
         var ft = c.nn.num_type(c.f);
         var magf;
         if (ft=='r') {magf=Math.abs(c.f);}
         if (ft=='q' || ft=='c') {magf=c.f.abs();}
         var tmagf = c.nn.num_type(magf);
-        if (tmagf=='r' && magf!=Math.floor(magf)) {return NaN;}
+        if (tmagf=='r' && magf!=Math.floor(magf) && !c.nn.is_zero(c.l)) {return NaN;}
         var argf = 1;
         var u = 1;
         if (ft=='c') {argf=c.f.arg(); u = com.lightandmatter.Complex(Math.cos(argf),Math.sin(argf));}
@@ -221,14 +229,37 @@ com.lightandmatter.LeviCivita =
     };
     c.cos = function() {
       var u = c.nn.binop('*',c,com.lightandmatter.Complex(0,1)).exp();
-      return c.nn.binop('/',c.nn.binop('+',u,u.inv()),2);
+      var y = c.nn.binop('/',c.nn.binop('+',u,u.inv()),2);
+      if (c.is_real() && !c.nn.is_real(y)) {y.force_real();}
+      return y;
     };
     c.sin = function() {
       var u = c.nn.binop('*',c,com.lightandmatter.Complex(0,1)).exp();
-      return c.nn.binop('/',c.nn.binop('-',u,u.inv()),com.lightandmatter.Complex(0,2));
+      var y = c.nn.binop('/',c.nn.binop('-',u,u.inv()),com.lightandmatter.Complex(0,2));
+      if (c.is_real() && !c.nn.is_real(y)) {y.force_real();}
+      return y;
     };
     c.tan = function() {
-      return c.nn.binop('/',c.sin(),c.cos());
+      var y = c.nn.binop('/',c.sin(),c.cos());
+      if (c.is_real() && !c.nn.is_real(y)) {y.force_real();}
+      return y;
+    };
+    c.cosh = function() {
+      var u = c.exp();
+      var y = c.nn.binop('/',c.nn.binop('+',u,u.inv()),2);
+      if (c.is_real() && !c.nn.is_real(y)) {y.force_real();}
+      return y;
+    };
+    c.sinh = function() {
+      var u = c.exp();
+      var y = c.nn.binop('/',c.nn.binop('-',u,u.inv()),2);
+      if (c.is_real() && !c.nn.is_real(y)) {y.force_real();}
+      return y;
+    };
+    c.tanh = function() {
+      var y = c.nn.binop('/',c.sinh(),c.cosh());
+      if (c.is_real() && !c.nn.is_real(y)) {y.force_real();}
+      return y;
     };
     c.sqrt = function() {
       return c.pow(com.lightandmatter.Rational(1,2));

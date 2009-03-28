@@ -36,6 +36,7 @@ com.lightandmatter.Parser =
     ];
     // In the following, func points to the function to use on the native javascript number type, cfunc is the one to use for everything else.
     // Some functions are implemented only in LeviCivita, not in Complex, so we promote and use the LC function; these are marked with c_as_l.
+    // Similarly if it's not implemented in Math for native numbers, set func to null.
     this.unop = [
       {'name':'sin','func':Math.sin,'cfunc':'sin','c_as_l':true},
       {'name':'cos','func':Math.cos,'cfunc':'cos','c_as_l':true},
@@ -43,6 +44,9 @@ com.lightandmatter.Parser =
       {'name':'asin','func':Math.asin},
       {'name':'acos','func':Math.acos},
       {'name':'atan','func':Math.atan},
+      {'name':'sinh','func':null,'cfunc':'sinh','c_as_l':true},
+      {'name':'cosh','func':null,'cfunc':'cosh','c_as_l':true},
+      {'name':'tanh','func':null,'cfunc':'tanh','c_as_l':true},
       {'name':'sqrt','func':Math.sqrt,'cfunc':'sqrt'},
       {'name':'abs','func':Math.abs,'cfunc':'abs'},
       {'name':'exp','func':Math.exp,'cfunc':'exp'},
@@ -205,17 +209,18 @@ com.lightandmatter.Parser =
         for (var i in this.unop) {
           if (this.unop[i].name==f) {
             var ff;
+            // Some functions are implemented only in LeviCivita, so promote and use the LC function:
+            var as_lc = ((this.unop[i].c_as_l===true && t=='c') || (t=='r' && this.unop[i].func===null));
+            if (as_lc) {x = com.lightandmatter.LeviCivita(x,0,[[0,1]]); t='l';}
+            if (t=='r' && (isNaN(x) || !isFinite(x))) {return NaN;}
             if (t=='r') {
               ff = this.unop[i].func;
             }
             else {
-              // Some functions are implemented only in LeviCivita, not in Complex, so promote and use the LC function:
-              if (this.unop[i].c_as_l===true && t=='c') {
-                x = com.lightandmatter.LeviCivita(x,0,[[0,1]]);
-              }
               ff = x[this.unop[i].cfunc];
             }
-            if (ff===undefined) {this.errs.push(["The function "+f+" is not implemented for variables of type "+this.nn.describe_type(t),start,end]); return null;}
+            var dt =  this.nn.describe_type(t);
+            if (ff===undefined) {this.errs.push(["The function "+f+" is not implemented for variables of type "+dt,start,end]); return null;}
             var y;
             try {
               y = ff(x);
@@ -228,7 +233,7 @@ com.lightandmatter.Parser =
               if (t=='r') {  // happens, e.g., ln(-1) or sqrt(-1) or asin(3)
                 x = com.lightandmatter.Complex(x,0.0);
                 ff = x[this.unop[i].cfunc];
-                return ff(x); 
+                try {return ff(x);} catch(foo) {this.errs.push(["Error evaluating function "+f+" for type "+dt],start,end);}
               }
               else {
                 return NaN;

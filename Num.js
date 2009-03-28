@@ -130,6 +130,15 @@ com.lightandmatter.Num.is_zero = function(c) {
       if (t=='l') {return c.f===0;}
     };
 
+com.lightandmatter.Num.is_real = function(c) {
+      //return true;
+      var t = com.lightandmatter.Num.num_type(c);
+      if (t=='r') {return true;}
+      if (t=='c') {return c.y===0;}
+      if (t=='q') {return true;}
+      if (t=='l') {return c.is_real();}
+    };
+
 // typically we promote to the "higher" type:
 com.lightandmatter.Num.height = function (t) {
       return {'q':1,'r':2,'c':3,'l':4}[t];

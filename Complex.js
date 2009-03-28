@@ -38,6 +38,7 @@ com.lightandmatter.Complex =
     c.ln =  function () {
       return  com.lightandmatter.Complex(0.5*Math.log(c.sq_abs()),c.arg());
     };
+    c.force_real = function () {c.y=0;}
     c.sq = function () {  return c.mul(c); };
     c.int_pow = function(p) { // c^p, p is an integer; for internal use only; check for 0^0 before calling this function
         // Do these first for efficiency in the case of largish exponents, calling recursively:
