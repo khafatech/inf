@@ -1,5 +1,8 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
-<head><title>Inf -- a calculator that can handle infinite and infinitesimal numbers</title></head>
+<head><title>Inf -- a calculator that can handle infinite and infinitesimal numbers</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
 <body onload = "set_up();">
 
 <h1>Inf</h1>
@@ -12,14 +15,14 @@ Type an expression at the &gt; prompt and hit Enter. For more documentation, scr
 <div id="terminal" style="width:100%; height:600px;"></div>
 
 
-  <script src="Terminal.js"></script>
-  <script src="Lexer.js"></script>
-  <script src="Parser.js"></script>
-  <script src="Num.js"></script>
-  <script src="Complex.js"></script>
-  <script src="Rational.js"></script>
-  <script src="LeviCivita.js"></script>
-  <script>
+  <script src="Terminal.js"   type="text/javascript"></script>
+  <script src="Lexer.js"      type="text/javascript"></script>
+  <script src="Parser.js"     type="text/javascript"></script>
+  <script src="Num.js"        type="text/javascript"></script>
+  <script src="Complex.js"    type="text/javascript"></script>
+  <script src="Rational.js"   type="text/javascript"></script>
+  <script src="LeviCivita.js" type="text/javascript"></script>
+  <script type="text/javascript">
     function set_up() {
       var lexer = new com.lightandmatter.Lexer({});
       var parser = new com.lightandmatter.Parser({});
@@ -45,23 +48,24 @@ Inf is a calculator that can handle infinite and infinitesimal numbers.
 </p>
 <p>
 Predefined constants:
+</p>
 <ul>
 <li> i -- the square root of -1
 <li> pi -- the ratio of a circle's circumference to its diameter
 <li> d -- an infinitesimally small number
 </ul>
-</p>
 <p>
 Built-in operators:
+</p>
 <ul>
 <li> : -- assigns the expression on the right to the variable named on the left-hand side
 <li> =, <, > -- comparisons
 <li> +, -, *, / -- arithmetic
 <li> ^ -- exponentiation
 </ul>
-</p>
 <p>
 Built-in functions:
+</p>
 <ul>
 <li> sin, cos, tan
 <li> asin, acos, atan
@@ -69,7 +73,6 @@ Built-in functions:
 <li> exp, ln
 <li> floor, ceil
 </ul>
-</p>
 <p>
 Inf represents infinite and infinitesimal quantities as <a href="http://en.wikipedia.org/wiki/Levi-Civita_field">Levi-Civita numbers</a>.
 The Levi-Civita numbers obey all the same <a href="http://en.wikipedia.org/wiki/First-order_logic">elementary</a> axioms of arithmetic as the real numbers.
@@ -82,6 +85,7 @@ anything in the Levi-Civita system that plays the role of &infin;, which is usua
 </p>
 <p>
 Here are some examples you can try in the calculator to get a feeling for how all this works:
+</p>
 <ul>
 <li> 1/0 ... undefined
 <li> 1/d ... gives an infinite result
@@ -89,15 +93,14 @@ Here are some examples you can try in the calculator to get a feeling for how al
 <li> 2/d+1 ... and an even bigger infinity
 <li> d>0 ... true
 <li> d<10^-10 ... true
-<li> d^2<d ... true, showing that we have different sizes of infinity
-<li> d^2>0 ... true, because even though d^2 is infinitesimally small compared to d, it's still no zero
+<li> d^2&lt;d ... true, showing that we have different sizes of infinity
+<li> d^2&gt;0 ... true, because even though d^2 is infinitesimally small compared to d, it's still no zero
 <li> sqrt(d)
 <li> sqrt(d)>d ... true
 <li> 1/(1-d) ... is calculated using the <a href="http://en.wikipedia.org/wiki/Geometric_series">geometric series</a>, up to a certain level of precision
 <li> exp(d) ... is calculated using a <a href="http://en.wikipedia.org/wiki/Taylor_series">Taylor series</a>
 <li> exp(1/d) ... is undefined in the Levi-Civita system
 </ul>
-</p>
 <p>
 Calculus students often get the impression that the notion of an infinite or infinitesimal number can never be defined in any rigorous or
 self-consistent way. That's not true. Tullio Levi-Civita defined the Levi-Civita numbers around 1900, so it's been known for over a
