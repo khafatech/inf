@@ -19,27 +19,27 @@ com.lightandmatter.Rational =
     c.mytype = 'q';
 
     c.clone = function (notidy) {return com.lightandmatter.Rational(c.x,c.y,notidy); };
-    c.eq = function (b) {return c.x!==null && c.y!=null && c.x*b.y==c.y*b.x; };
+    c.eq = function (b) {return c.x!==null && c.y!==null && c.x*b.y==c.y*b.x; };
     c.cmp = function (b) {
       if (c.x===null || c.y===null) {return null;}
       return c.x*b.y-b.x*c.y; // works because y's are guaranteed positive
     };
     c.mul = function (b) { return com.lightandmatter.Rational(c.x*b.x,c.y*b.y); };
-    c.div = function (b) { if (b.x==0) {return NaN;} return com.lightandmatter.Rational(c.x*b.y,c.y*b.x); };
+    c.div = function (b) { if (b.x===0) {return NaN;} return com.lightandmatter.Rational(c.x*b.y,c.y*b.x); };
     c.neg = function () { return com.lightandmatter.Rational(-c.x,c.y); };
     c.add = function (b) { return com.lightandmatter.Rational(c.x*b.y+b.x*c.y,c.y*b.y); };
     c.sub = function (b) { return c.add(b.neg()); };
 
     c.toString = function() {
-      if (c.y==1) {return c.x.toString()}
+      if (c.y==1) {return c.x.toString();}
       return c.x + '/' + c.y;
     };
     c.toNumber = function() {
       return c.x/c.y;
     };
     c.tidy = function() { // returns result, doesn't operate in place; may return native number type
-      if (c.y==1) {return c.x}
-      if (c.x==0) {return 0}
+      if (c.y==1) {return c.x;}
+      if (c.x===0) {return 0;}
       var j = c.clone(true);
       j.x = c.x;
       j.y = c.y;
@@ -63,7 +63,7 @@ com.lightandmatter.Rational =
       return j;
     };
 
-    if (!notidy) {c=c.tidy()}
+    if (!notidy) {c=c.tidy();}
 
     return c;
 

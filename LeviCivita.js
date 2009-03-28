@@ -36,9 +36,9 @@ com.lightandmatter.LeviCivita =
     };
     c.zero = function () {
       return com.lightandmatter.LeviCivita(0.0,0);
-    }
+    };
     c.toString = function() {
-      if (c.f===0) {return '0'}
+      if (c.f===0) {return '0';}
       var l = [];
       for (var i=0; i<c.s.length && i<com.lightandmatter.LeviCivita.n_display; i++) {
         var q = c.s[i][0];
@@ -86,10 +86,10 @@ com.lightandmatter.LeviCivita =
       return c.add(b.neg()); // add() handles tidying
     };
     c.is_real = function () {
-      if (com.lightandmatter.Num.num_type(c.f)=='c' && c.f.y!==0) {return false}
+      if (com.lightandmatter.Num.num_type(c.f)=='c' && c.f.y!==0) {return false;}
       for (var i=0; i<c.s.length; i++) {
         var a = c.s[i][1];
-        if (com.lightandmatter.Num.num_type(a)=='c' && a.y!==0) {return false}
+        if (com.lightandmatter.Num.num_type(a)=='c' && a.y!==0) {return false;}
       }
       return true;
     };
@@ -104,7 +104,7 @@ com.lightandmatter.LeviCivita =
       return true;
     };
     c.cmp = function (b) {
-      if (!(c.is_real() && b.is_real())) {return null}
+      if (!(c.is_real() && b.is_real())) {return null;}
       if (c.f===0 && b.f===0) {return 0;}
       if ((c.f===0 && b.f!==0) || (c.f!==0 && b.f===0)) {return c.nn.binop('cmp',c.f,b.f);}
       // From this point on, we know they're both real, and both nonzero.
@@ -135,7 +135,7 @@ com.lightandmatter.LeviCivita =
       return s;
     };
     c.mul = function (b) {
-      var z = com.lightandmatter.LeviCivita(c.nn.binop('*',b.f,c.f),c.nn.binop('+',b.l,c.l));;
+      var z = com.lightandmatter.LeviCivita(c.nn.binop('*',b.f,c.f),c.nn.binop('+',b.l,c.l));
       z.s = [];
       for (var i in b.s) {
         for (var j in c.s) {
@@ -149,7 +149,7 @@ com.lightandmatter.LeviCivita =
     };
     c.sq = function () {
       return c.mul(c);
-    }
+    };
     c.generate_taylor = function (f) {
       var m = com.lightandmatter.LeviCivita.n;
       var t = [];
@@ -206,7 +206,7 @@ com.lightandmatter.LeviCivita =
         // t = 1,p,p*(p-1)/2,p*(p-1)*(p-2)/6,...
         var m = com.lightandmatter.LeviCivita.n;
         var t = [];
-        u = 1;
+        var u = 1;
         for (var i=0; i<m; i++) {
           t.push(u);
           u=u*(p-i)/(i+1);
@@ -235,7 +235,7 @@ com.lightandmatter.LeviCivita =
       return c.pow(com.lightandmatter.Rational(1,2));
     };
     c.tidy = function() {
-      c.s.sort(function(a,b) {return c.nn.binop('cmp',a[0],b[0])});
+      c.s.sort(function(a,b) {return c.nn.binop('cmp',a[0],b[0]);});
       var ss = [];
       var last_q = null;
       for (var i=0; i<c.s.length; i++) {
@@ -254,14 +254,14 @@ com.lightandmatter.LeviCivita =
            c.s.splice(i,1);
         }
       }
-      if (c.s.length===0) {c = c.zero()}
+      if (c.s.length===0) {c = c.zero();}
       c.s.splice(com.lightandmatter.LeviCivita.n); // truncate to n terms
       var k = c.s[0][1];
       c.f = c.nn.binop('*',c.f,k);
       //c.debug('new front = '+c.f);
       for (var i=0; i<c.s.length; i++) {
         c.s[i][1] = c.nn.binop('/',c.s[i][1],k);
-        if (c.nn.num_type(c.s[i][1])=='q') {c.s[i][1]=c.s[i][1].tidy()}
+        if (c.nn.num_type(c.s[i][1])=='q') {c.s[i][1]=c.s[i][1].tidy();}
         //c.debug('new a = '+c.s[i][1]);
       }
     };

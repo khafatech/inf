@@ -36,7 +36,7 @@ com.lightandmatter.Num.promote = function(x,y) {
 
       // ---complex and (real|rational) ---
       if (tt=='cr' || tt=='cq') {
-        if (ty=='q') {y=y.toNumber()}
+        if (ty=='q') {y=y.toNumber();}
         return ['c',x,com.lightandmatter.Complex(y,0)];
       }
       // real & rational --- test for whether r is integer
@@ -52,7 +52,7 @@ com.lightandmatter.Num.promote = function(x,y) {
       }
       // ---LC and (real | complex | rational) ---
       if (tt=='lr' || tt=='lc' || tt=='lq') {
-        if (ty=='q') {y=y.toNumber()}
+        if (ty=='q') {y=y.toNumber();}
         return ['l',x,com.lightandmatter.LeviCivita(y,0,[[0,1]])];
       }
       return [null,null,null,["unable to do type promotion, types="+tx+','+ty]];

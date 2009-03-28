@@ -18,15 +18,12 @@ com.lightandmatter.Complex =
     c.mytype = 'c';
 
     c.clone = function () {return com.lightandmatter.Complex(c.x,c.y); };
-    c.eq = function (b) {return c.x!==null && c.y!=null && c.x==b.x && c.y==b.y; };
+    c.eq = function (b) {return c.x!==null && c.y!==null && c.x==b.x && c.y==b.y; };
     c.add = function (b) {var z = c.clone(); z.x += b.x; z.y += b.y; return z; };
     c.sub = function (b) {var z = c.clone(); z.x -= b.x; z.y -= b.y; return z; };
     c.sq_abs = function () {return c.x*c.x+c.y*c.y;};
     c.abs = function () {return Math.sqrt(c.sq_abs());};
-    c.mul = function (b) { return com.lightandmatter.Complex(
-                             c.x*b.x-c.y*b.y,
-                             c.x*b.y+c.y*b.x
-                           ); };
+    c.mul = function (b) { return com.lightandmatter.Complex(c.x*b.x-c.y*b.y,c.x*b.y+c.y*b.x); };
     c.inv = function () { 
                            var s = c.sq_abs();
                            return com.lightandmatter.Complex(c.x/s,-c.y/s); };
@@ -70,10 +67,10 @@ com.lightandmatter.Complex =
     c.ceil = function() {return com.lightandmatter.Complex(Math.ceil(c.x),Math.ceil(c.y));};
 
     c.toString = function() {
-      if (c.y==0) {return c.x.toString()}
-      if (c.x==0) {
-        if (c.y==1) {return 'i'}
-        if (c.y== -1) {return '-i'}
+      if (c.y===0) {return c.x.toString();}
+      if (c.x===0) {
+        if (c.y==1) {return 'i';}
+        if (c.y== -1) {return '-i';}
         return c.y.toString()+' i';
       }
       return c.x + ' + ' + c.y + ' i';

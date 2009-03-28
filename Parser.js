@@ -67,7 +67,7 @@ com.lightandmatter.Parser =
       if (start>=end) {
         var p = this.props[start];
         if (p!==undefined) {
-          if (p.name===null && p.num===null && tokens[start]!=='-' && tokens[start]!='') {this.errs.push(['illegal characters',start,end]);}//final test on - is to allow for unary minus
+          if (p.name===null && p.num===null && tokens[start]!=='-' && tokens[start]!=='') {this.errs.push(['illegal characters',start,end]);}//final test on - is to allow for unary minus
           if (p.num!==null) {
             // Lexer will let through malformed stuff like 1.2.3. Check for that.
             if (tokens[start].match(/\..*\./)) {this.errs.push(['malformed number with more than one decimal point',start,end]);}
@@ -184,8 +184,6 @@ com.lightandmatter.Parser =
         }
         var a = this.tree_to_string(tree[2]); // left-hand side
         return this.nn.binop(op,a,b);
-        this.errs.push(["The binary operator "+op+" is not implemented for variables of type "+this.nn.describe_type(t),start,end]);
-        return null;
       }
       if (what==='unop') {
         var f = tree[1];
@@ -208,7 +206,7 @@ com.lightandmatter.Parser =
             try {
               y = ff(x);
             }
-            catch (foo) {};
+            catch (foo) {}
             if (y!==undefined && y!==null && !(typeof(y)=='number' && (isNaN(y) || !isFinite(y)))) {
               return y;
             }
