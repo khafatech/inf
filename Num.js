@@ -122,6 +122,14 @@ com.lightandmatter.Num.num_type = function(x) {
       return null;
     };
 
+com.lightandmatter.Num.is_zero = function(c) {
+      var t = com.lightandmatter.Num.num_type(c);
+      if (t=='r') {return c===0;}
+      if (t=='c') {return c.x===0 && c.y===0;}
+      if (t=='q') {return c.x===0;}
+      if (t=='l') {return c.f===0;}
+    };
+
 // typically we promote to the "higher" type:
 com.lightandmatter.Num.height = function (t) {
       return {'q':1,'r':2,'c':3,'l':4}[t];

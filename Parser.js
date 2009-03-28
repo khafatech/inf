@@ -10,8 +10,7 @@
 //    binary operators are left-associative by default
 //    assignment operator returns lhs, and has side-effect of carrying out assignment
 // to do:
-//    implement trig and inverse trig functions for complex args
-//    prohibit assignment into constants
+//    implement inverse trig functions for complex and LC args
 
 var com;
 if (!com) {com = {};}
@@ -35,10 +34,12 @@ com.lightandmatter.Parser =
       {'name':'^','assoc':'right'},
       {'name':'-','unary':true} // handles 3^-1
     ];
+    // In the following, func points to the function to use on the native javascript number type, cfunc is the one to use for everything else.
+    // Some functions are implemented only in LeviCivita, not in Complex, so we promote and use the LC function; these are marked with c_as_l.
     this.unop = [
-      {'name':'sin','func':Math.sin},
-      {'name':'cos','func':Math.cos},
-      {'name':'tan','func':Math.tan},
+      {'name':'sin','func':Math.sin,'cfunc':'sin','c_as_l':true},
+      {'name':'cos','func':Math.cos,'cfunc':'cos','c_as_l':true},
+      {'name':'tan','func':Math.tan,'cfunc':'tan','c_as_l':true},
       {'name':'asin','func':Math.asin},
       {'name':'acos','func':Math.acos},
       {'name':'atan','func':Math.atan},
@@ -54,6 +55,10 @@ com.lightandmatter.Parser =
       'pi':Math.PI,
       'i':com.lightandmatter.Complex(0.0,1.0),
       'd':com.lightandmatter.LeviCivita(1.0,1.0,[[0,1]])
+    };
+    this.builtin_constants = {}; // They're not allowed to overwrite these.
+    for (var builtin in this.sym) {
+      this.builtin_constants[builtin] = true;
     };
 
     this.parse = function(tokens,props) {
@@ -179,7 +184,12 @@ com.lightandmatter.Parser =
             this.errs.push(["The left-hand side of the assignment statement is not a valid name for a variable."],start,end);
             return null;
           }
-          this.sym[lhs[2].name] = b;
+          var n = lhs[2].name;
+          if (this.builtin_constants[n]===true) {
+            this.errs.push(["Illegal assignment into built-in constant "+n,start,end]);
+            return null;
+          }
+          this.sym[n] = b;
           return b;
         }
         var a = this.tree_to_string(tree[2]); // left-hand side
@@ -199,6 +209,10 @@ com.lightandmatter.Parser =
               ff = this.unop[i].func;
             }
             else {
+              // Some functions are implemented only in LeviCivita, not in Complex, so promote and use the LC function:
+              if (this.unop[i].c_as_l===true && t=='c') {
+                x = com.lightandmatter.LeviCivita(x,0,[[0,1]]);
+              }
               ff = x[this.unop[i].cfunc];
             }
             if (ff===undefined) {this.errs.push(["The function "+f+" is not implemented for variables of type "+this.nn.describe_type(t),start,end]); return null;}
