@@ -102,8 +102,24 @@ com.lightandmatter.Parser =
           if (tokens[j]==name && paren_depth===0) {
             var is_unary_minus = name=='-' && ((j==start) || (/[=\+\-\*\/\^\(]/.test(tl))); // the kludgy regex is needed for, e.g., 2*-3
             var match = (name!='-') || (is_unary_minus==b.unary);
+            var function_def = ''; // ='f' for function definition f x : x^2
+            var bound_var = '';
+            var clobbered; // normally stays undefined; if defining f x, x may also be a defined variable, so save its value
+            if (name==':' && j==start+2) {
+              function_def=tokens[start];
+              bound_var=tokens[start+1];
+              this.delete_function(function_def);
+              this.unop.unshift({'name':function_def});
+              clobbered = this.sym.bound_var;
+              this.sym.bound_var = null; // null marks it as bound var
+            } 
             var lhs = this.parse_part(tokens,start,j-1);
             var rhs = this.parse_part(tokens,j+1,end);
+            if (function_def!=='') {
+              if (clobbered!==undefined) {this.sym.bound_var=clobbered;}
+              lhs = ['leaf',function_def,{'name':function_def}];
+              rhs = this.lambdafy(bound_var,rhs);
+            }
             if (match) {
               var skip = false;
               if (is_unary_minus) {
@@ -180,12 +196,17 @@ com.lightandmatter.Parser =
         var op = tree[1];
         var start = tree[4]; // for error messages, if necessary
         var end = tree[5];
-        var b = this.tree_to_string(tree[3]); // right-hand side
-        if (b===null) {this.errs.push(["Nothing is on the right-hand side of the operator "+op+" in the expression ",start,end]); return null;}
+        var rhs = tree[3];
+        var function_def = op==':' && rhs[0]=='lambda';
+        var b;
+        if (!function_def) {
+          b = this.tree_to_string(rhs);
+          if (b===null) {this.errs.push(["Nothing is on the right-hand side of the operator "+op+" in the expression ",start,end]); return null;}
+        }
         if (op==':') {
           var lhs = tree[2];
           if (lhs[0] != 'leaf' || lhs[2].name===null) {
-            this.errs.push(["The left-hand side of the assignment statement is not a valid name for a variable."],start,end);
+            this.errs.push(["The left-hand side of the assignment statement is not a valid name for a variable or function."],start,end);
             return null;
           }
           var n = lhs[2].name;
@@ -193,8 +214,15 @@ com.lightandmatter.Parser =
             this.errs.push(["Illegal assignment into built-in constant "+n,start,end]);
             return null;
           }
-          this.sym[n] = b;
-          return b;
+          if (!function_def) {
+            this.sym[n] = b;
+            return b;
+          }
+          else {
+            this.delete_function(n); // delete the placeholder that only had a name field but no userfunc
+            this.unop.unshift({'name':n,'userfunc':rhs}); // ...and replace it with a full entry
+            return null;
+          }
         }
         var a = this.tree_to_string(tree[2]); // left-hand side
         return this.nn.binop(op,a,b);
@@ -209,6 +237,17 @@ com.lightandmatter.Parser =
         for (var i in this.unop) {
           if (this.unop[i].name==f) {
             var ff;
+            if (this.unop[i].userfunc!==undefined) {
+              ff = this.unop[i].userfunc;
+              var b = ff[1]; // bound var, will be set to x; has a collision-avoiding name like 'bound_var___'
+              var e = ff[2]; // defining expression
+              var clobber = this.sym[b]; // may already have a value, if functions are nested
+              this.sym[b] = x;
+              var y = this.tree_to_string(e);
+              delete this.sym.b;
+              if (clobber!==undefined) {this.sym[b]=clobber}
+              return y;
+            }
             // Some functions are implemented only in LeviCivita, so promote and use the LC function:
             var as_lc = ((this.unop[i].c_as_l===true && t=='c') || (t=='r' && this.unop[i].func===null));
             if (as_lc) {x = com.lightandmatter.LeviCivita(x,0,[[0,1]]); t='l';}
@@ -248,6 +287,29 @@ com.lightandmatter.Parser =
     this.props_to_string = function(props) {
       if (props===undefined) {return null;}
       return 'name='+props.name+', num='+props.num;
+    };
+
+    this.delete_function = function(f) {
+      for (var i in this.unop) {
+        if (this.unop[i].name==f) {this.unop.splice(i,i); return}
+      }
+    };
+
+    this.lambdafy = function(x,tree) {
+      var b = 'bound_var___';
+      return ['lambda',b,this.rename_var(tree,x,b)];
+    };
+
+    this.rename_var = function(tree,x,y) {
+      var what = tree[0];
+      if (what==='leaf') {
+        if (tree[1]!=x) {return tree}
+        return [tree[0],y,{'name':y,'num':null}];
+      }
+      if (what==='error') {return tree;}
+      if (what==='binop') {return [tree[0],tree[1],this.rename_var(tree[2],x,y),this.rename_var(tree[3],x,y)];}
+      if (what==='unop') {return [tree[0],tree[1],this.rename_var(tree[2],x,y)];}
+      return undefined;
     };
 
     var debug = function(s) {
