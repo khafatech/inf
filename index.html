@@ -22,6 +22,7 @@ Type an expression at the &gt; prompt and hit Enter. For more documentation, scr
   <script src="Complex.js"    type="text/javascript"></script>
   <script src="Rational.js"   type="text/javascript"></script>
   <script src="LeviCivita.js" type="text/javascript"></script>
+  <script src="Test.js"       type="text/javascript"></script>
   <script type="text/javascript">
     function set_up() {
       var lexer = new com.lightandmatter.Lexer({});
@@ -38,6 +39,7 @@ Type an expression at the &gt; prompt and hit Enter. For more documentation, scr
           lexer.change_text(t);
          })
       });
+      if (window.location.search == "?test") {com.lightandmatter.Test(document.getElementById("debug2"),lexer,parser);}
     }
   </script>
 
@@ -62,6 +64,7 @@ Built-in operators:
 <li> =, <, > -- comparisons
 <li> +, -, *, / -- arithmetic
 <li> ^ -- exponentiation
+<li> Statements can be separated by semicolons.
 </ul>
 <p>
 Built-in functions:

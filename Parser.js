@@ -22,6 +22,7 @@ com.lightandmatter.Parser =
     this.nn = com.lightandmatter.Num;
     // in order from lowest to highest precedence:
     this.binop = [
+      {'name':';'},
       {'name':':'},
       {'name':'<'},
       {'name':'>'},
@@ -186,7 +187,7 @@ com.lightandmatter.Parser =
         if (props!==undefined && props.name!==null) {
           var name = props.name;
           var value = this.sym[name];
-          if (value===undefined) {this.errs.push(["undefined variable: \""+name+'"']); return null;}
+          if (value===undefined) {this.errs.push(["undefined variable: \""+name+'"']); debug('had undefined variable'+this.tree_to_debug_string(tree)); return null;} //qwe debug() only
           return value;
         }
         return null;
@@ -194,17 +195,19 @@ com.lightandmatter.Parser =
       if (what==='error') {return null;}
       if (what==='binop') {
         var op = tree[1];
+        var lhs = tree[2];
+        var rhs = tree[3];
         var start = tree[4]; // for error messages, if necessary
         var end = tree[5];
-        var rhs = tree[3];
         var function_def = op==':' && rhs[0]=='lambda';
+        var a;
         var b;
         if (!function_def) {
+          if (op!=':') {a = this.tree_to_string(lhs);} // Don't try to evaluate it if it's the lhs of an assignment, since it won't be defined yet.
           b = this.tree_to_string(rhs);
           if (b===null) {this.errs.push(["Nothing is on the right-hand side of the operator "+op+" in the expression ",start,end]); return null;}
         }
         if (op==':') {
-          var lhs = tree[2];
           if (lhs[0] != 'leaf' || lhs[2].name===null) {
             this.errs.push(["The left-hand side of the assignment statement is not a valid name for a variable or function."],start,end);
             return null;
@@ -224,7 +227,6 @@ com.lightandmatter.Parser =
             return null;
           }
         }
-        var a = this.tree_to_string(tree[2]); // left-hand side
         return this.nn.binop(op,a,b);
       }
       if (what==='unop') {

@@ -65,6 +65,9 @@ com.lightandmatter.Num.binop = function(op,a,b) {
         var t = prom[0];
         a = prom[1];
         b = prom[2];
+        if (op==';') {
+          return b;
+        }
         if (t!='r' && t!='c' && t!='l' && t!='q') {
           return null;
         }
