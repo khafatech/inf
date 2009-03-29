@@ -1,5 +1,5 @@
 // Lexer.js
-// (c) 2007 B. Crowell, GPL 2 license
+// (c) 2007 B. Crowell and M. Khafateh, GPL 2 license
 //
 // This file provides a constructor, com.lightandmatter.Lexer, for a fast lexer meant to be used
 // with on-the-fly input from a user as he types.

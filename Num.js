@@ -1,5 +1,5 @@
 // Num.js
-// (c) 2007 B. Crowell, GPL 2 license
+// (c) 2007 B. Crowell and M. Khafateh, GPL 2 license
 //
 // This file provides a module, com.lightandmatter.Num.
 //
