@@ -3,6 +3,9 @@
 //
 // This file provides a constructor, com.lightandmatter.Test.
 //
+// to do:
+//   tolerate small rounding errors
+//   fix the ones that actually fail
 
 var com;
 if (!com) {com = {};}
@@ -23,9 +26,13 @@ com.lightandmatter.Test =
                        ["1+d"],
                        ["1/d"],
                        ["d+d","2*d"],
-                       ["(a:6*7);a+5",47],
-                       ["x:1;x=1",true], // fails
                        ["2*d>d",true],
+                       ["a:6*7;a+5",47],
+                       ["f x:x^2"],            // define f for next test
+                       ["f(f(2))",16],         // composition of functions
+                       ["sqrt(-1)","i"],
+                       ["((1+i)/(sqrt 2))^8",1],
+                       ["zzz:1;zzz=1",true],       // fails**************
                        // "foo",
                        // "2d",  // the parser doesn't return anything for this line
                        [] // end of list
