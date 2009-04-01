@@ -11,19 +11,28 @@
 //    assignment operator returns lhs, and has side-effect of carrying out assignment
 // to do:
 //    implement inverse trig functions for complex and LC args
+//    make some operators for operating on an LC number z:
+//      lc_lambda z = lambda "order of magnitude" operator
+//      array z = list of lists of q's and a_q's.
+//      These would be useful in the test suite.
+//    Array thing is awkward right now because I don't have any easy way to form nested lists syntactically;
+//               can do (1,(2,3)), but because it's left-associative, ((1,2),(3,4)) evaluates to [1,2,[3,4]].
+//               This makes it impossible to use arrays to check LC numbers in test suite, which was the main application of arrays I had in mind.
+//               Possible solution is to have a flatten operator. I'm not clear on how to implement something like JS's [[1,2],[3,4]] in my parser,
+//               and I'm not sure I want to dedicate square brackets to this purpose. I can stick dummy elements on the front, like (0,(1,2)), but that's lame.
 
 var com;
 if (!com) {com = {};}
 if (!com.lightandmatter) {com.lightandmatter = {};}
-
 
 com.lightandmatter.Parser =
   function () {
     this.nn = com.lightandmatter.Num;
     // in order from lowest to highest precedence:
     this.binop = [
-      {'name':';'},
-      {'name':':'},
+      {'name':';','nopromote':true},
+      {'name':':','nopromote':true},
+      {'name':',','nopromote':true},
       {'name':'<'},
       {'name':'>'},
       {'name':'='},
@@ -53,13 +62,18 @@ com.lightandmatter.Parser =
       {'name':'exp','func':Math.exp,'cfunc':'exp'},
       {'name':'ln','func':Math.log,'cfunc':'ln'},
       {'name':'floor','func':Math.floor,'cfunc':'floor'},
-      {'name':'ceil','func':Math.ceil,'cfunc':'ceil'}
+      {'name':'ceil','func':Math.ceil,'cfunc':'ceil'},
+      {'name':'array','cfunc':'to_array'}
     ];
 
     this.sym = {
       'pi':Math.PI,
       'i':com.lightandmatter.Complex(0.0,1.0),
-      'd':com.lightandmatter.LeviCivita(1.0,1.0,[[0,1]])
+      'd':com.lightandmatter.LeviCivita(1.0,1.0,[[0,1]]),
+    };
+    // get and set the variable by calling this function rather that by looking something up in the symbol table:
+    this.sym_side_effect = {
+      'levi_civita_n':com.lightandmatter.LeviCivita.change_n
     };
     this.builtin_constants = {}; // They're not allowed to overwrite these.
     for (var builtin in this.sym) {
@@ -175,8 +189,25 @@ com.lightandmatter.Parser =
         return e;
       }
       if (s===null) {s='';}
+      if (typeof(s)=='object' && s instanceof Array) {
+        // Intervene to keep it from flattening arrays of arrays, which is what toString() normally does on arrays.
+        s = this.array_to_string(s);
+      }
       s = s.toString().replace(/NaN/,"undefined");
       return s;
+    };
+
+    this.array_to_string = function(a) {
+      if (typeof(a)=='object' && a instanceof Array) {
+        var b = [];
+        for (var i in a) {
+          b.push(this.array_to_string(a[i]));
+        }
+        return '['+b.join(',')+']';
+      }
+      else {
+        return a.toString();
+      }
     };
 
     this.tree_to_string = function(tree) {
@@ -187,6 +218,7 @@ com.lightandmatter.Parser =
         if (props!==undefined && props.name!==null) {
           var name = props.name;
           var value = this.sym[name];
+          if (this.sym_side_effect[name]!==undefined) {value=this.sym_side_effect[name]();}
           if (value===undefined) {this.errs.push(["undefined variable: \""+name+'"']); debug('had undefined variable'+this.tree_to_debug_string(tree)); return null;} //qwe debug() only
           return value;
         }
@@ -203,7 +235,11 @@ com.lightandmatter.Parser =
         var a;
         var b;
         if (!function_def) {
-          if (op!=':') {a = this.tree_to_string(lhs);} // Don't try to evaluate it if it's the lhs of an assignment, since it won't be defined yet.
+          // Order of evaluation can be important:
+          //   In an assignment, don't even try to evaluate the left-hand side; even if we tried to evaluate it after the rhs, it would cause errors if
+          //             if was a function definition, because the dummy var is undefined.
+          //   In a ; operator, we need to evaluate the lhs first, because it may have side-effects such as assignment.
+          if (op!=':') {a = this.tree_to_string(lhs);} 
           b = this.tree_to_string(rhs);
           if (b===null) {this.errs.push(["Nothing is on the right-hand side of the operator "+op+" in the expression ",start,end]); return null;}
         }
@@ -218,6 +254,7 @@ com.lightandmatter.Parser =
             return null;
           }
           if (!function_def) {
+            if (this.sym_side_effect[n]!==undefined) {this.sym_side_effect[n](b);}
             this.sym[n] = b;
             return b;
           }
@@ -226,8 +263,9 @@ com.lightandmatter.Parser =
             this.unop.unshift({'name':n,'userfunc':rhs}); // ...and replace it with a full entry
             return null;
           }
-        }
-        return this.nn.binop(op,a,b);
+        }// endif :
+        // If it's not : operator, we fall through to here.
+        return this.nn.binop(op,a,b,this.find_binop(op).nopromote);
       }
       if (what==='unop') {
         var f = tree[1];
@@ -285,6 +323,13 @@ com.lightandmatter.Parser =
       }
       return null;
     };
+
+    this.find_binop = function (op) {
+      for (var i in this.binop) {
+        if (this.binop[i].name==op) {return this.binop[i];}
+      }
+      return undefined;
+    }
 
     this.props_to_string = function(props) {
       if (props===undefined) {return null;}

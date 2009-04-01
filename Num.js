@@ -58,24 +58,46 @@ com.lightandmatter.Num.promote = function(x,y) {
       return [null,null,null,["unable to do type promotion, types="+tx+','+ty]];
     };
 
-com.lightandmatter.Num.binop = function(op,a,b) {
+com.lightandmatter.Num.binop = function(op,a,b,nopromote) { // boolean nopromote is optional
+        if (arguments.length<4 || nopromote===undefined || nopromote===null) {nopromote=false;}
         var nn = com.lightandmatter.Num;
         var original_b = b;
-        var prom = nn.promote(a,b);
-        var t = prom[0];
-        a = prom[1];
-        b = prom[2];
+        var prom,t;
+        if (nn.num_type(a)=='a' || nn.num_type(b)=='a') {t='a';} // could be, e.g., 1,2,3, which gets evaluated as (1,2),3
+        if (!nopromote && t!='a') {
+          prom = nn.promote(a,b);
+          t = prom[0];
+          a = prom[1];
+          b = prom[2];
+        }
         if (op==';') {
           return b;
         }
-        if (t!='r' && t!='c' && t!='l' && t!='q') {
+        if (op==',') {
+          if (nn.num_type(a)=='a') {
+            a.push(b); // This has the side-effect of altering the lhs, but I think that's okay, because we won't retain any refs to it.
+            return a;
+          }
+          else {
+            return [a,b];
+          }
+        }
+        if (op=='=') { // Complexes have = but not cmp; arrays have =.
+          if (t=='r') {return a==b;}
+          if (t=='a') {
+            if (a.length!=b.length) {return false;}
+            for (var i in a) {
+              if (!nn.binop('=',a[i],b[i])) {return false;}
+            }
+            return true;
+          }
+          return a.eq(b);
+        }
+        if (t!='r' && t!='c' && t!='l' && t!='q') { // e.g., if it's an array, we return null
           return null;
         }
         if (op=='cmp') {
           if (t=='r') {return a-b;} else {return a.cmp(b);}
-        }
-        if (op=='=') {
-          if (t=='r') {return a==b;} else {return a.eq(b);} // Complexes have = but not cmp.
         }
         if (op=='<') {
           if (t=='r') {return a<b;} else {return a.cmp(b)<0;}
@@ -118,6 +140,7 @@ com.lightandmatter.Num.binop = function(op,a,b) {
 
 com.lightandmatter.Num.num_type = function(x) {
       if (x===null) {return null;}
+      if (typeof(x)=='object' && (x instanceof Array)) {return 'a';} // array
       if (typeof(x)=='number') {return 'r';} // real
       if (x.mytype == 'q') {return 'q';} // rational
       if (x.mytype == 'c') {return 'c';} // complex

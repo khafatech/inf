@@ -18,6 +18,7 @@ com.lightandmatter.Complex =
     c.mytype = 'c';
 
     c.clone = function () {return com.lightandmatter.Complex(c.x,c.y); };
+    c.to_array = function () {return [c.x,c.y];};
     c.eq = function (b) {return c.x!==null && c.y!==null && c.x==b.x && c.y==b.y; };
     c.add = function (b) {var z = c.clone(); z.x += b.x; z.y += b.y; return z; };
     c.sub = function (b) {var z = c.clone(); z.x -= b.x; z.y -= b.y; return z; };

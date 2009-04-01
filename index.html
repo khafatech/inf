@@ -39,7 +39,9 @@ Type an expression at the &gt; prompt and hit Enter. For more documentation, scr
           lexer.change_text(t);
          })
       });
-      if (window.location.search == "?test") {com.lightandmatter.Test(document.getElementById("debug2"),lexer,parser);}
+      //if (window.location.search == "?test") {com.lightandmatter.Test(document.getElementById("debug2"),lexer,parser);}
+      // ... apparently window.location.search doesn't work in IE; does the following work in IE?:
+      if (location.search == "?test") {com.lightandmatter.Test(document.getElementById("debug2"),lexer,parser);}
     }
   </script>
 
@@ -49,22 +51,24 @@ Type an expression at the &gt; prompt and hit Enter. For more documentation, scr
 Inf is a calculator that can handle infinite and infinitesimal numbers.
 </p>
 <p>
-Predefined constants:
+Special constants and variables:
 </p>
 <ul>
 <li> i -- the square root of -1
 <li> pi -- the ratio of a circle's circumference to its diameter
 <li> d -- an infinitesimally small number
+<li> levi_civita_n -- sets the number of terms to maintain in series expansions of Levi-Civita numbers
 </ul>
 <p>
 Built-in operators:
 </p>
 <ul>
-<li> : -- assigns the expression on the right to the variable named on the left-hand side
-<li> =, <, > -- comparisons
 <li> +, -, *, / -- arithmetic
 <li> ^ -- exponentiation
-<li> Statements can be separated by semicolons.
+<li> =, <, > -- comparisons
+<li> ; -- separates multiple statements on the same line
+<li> , -- builds arrays, e.g., (1,2)
+<li> : -- assigns the expression on the right to the variable named on the left-hand side
 </ul>
 <p>
 Built-in functions:
@@ -75,6 +79,7 @@ Built-in functions:
 <li> sqrt, abs
 <li> exp, ln
 <li> floor, ceil
+<li> array -- converts a Levi-Civita number, complex number, or rational number to a representation in terms of an array
 </ul>
 <p>
 User-defined functions:

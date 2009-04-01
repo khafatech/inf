@@ -19,6 +19,7 @@ com.lightandmatter.Rational =
     c.mytype = 'q';
 
     c.clone = function (notidy) {return com.lightandmatter.Rational(c.x,c.y,notidy); };
+    c.to_array = function () {return [c.x,c.y];};
     c.eq = function (b) {return c.x!==null && c.y!==null && c.x*b.y==c.y*b.x; };
     c.cmp = function (b) {
       if (c.x===null || c.y===null) {return null;}

@@ -155,16 +155,22 @@ com.lightandmatter.LeviCivita =
       }
       return s;
     };
+    c.to_array = function() { // array operator
+      var a = [];
+      for (var i=0; i<c.s.length && i<com.lightandmatter.LeviCivita.n_display; i++) { // use n_display, not n, so that we can test for equality using arrays in test suite
+        var b = [c.s[i][0],c.s[i][1]]; // rebuild it, because otherwise we get a reference that gets modified
+        b[0] = c.nn.binop('+',b[0],c.l);
+        b[1] = c.nn.binop('*',b[1],c.f);
+        a[i] = b;
+      }
+      return a;
+    };
     c.inv = function() {
       var z = c.clone();
       z.f = c.nn.binop('/',1,z.f);
       z.l = c.nn.binop('-',0,z.l);
       z.s = [[0,1]];
       // reduce it to inverting 1/(1-e):
-      //var foo = c.eps_part().neg();
-      //c.debug('c='+c+' ');
-      //c.debug('eps='+c.eps_part()+' ');
-      //c.debug('foo='+foo+' ');
       return c.nn.binop('*',z,c.eps_part().neg().expand(com.lightandmatter.LeviCivita.taylor.inv));
     };
     c.div = function (b) {
@@ -301,8 +307,11 @@ com.lightandmatter.LeviCivita =
 
   };
 
-com.lightandmatter.LeviCivita.n = 10; // number of terms to keep in the series
-com.lightandmatter.LeviCivita.n_display = 5; // only display this many, so the user isn't likely to see the results of truncation
+
+// Don't set the following directly. Use change_n().
+com.lightandmatter.LeviCivita.n; // number of terms to keep in the series
+com.lightandmatter.LeviCivita.n_display;
+    // only display this many, so the user isn't likely to see the results of truncation; also, only use this many terms in results of array operator
 // I think n should be twice as big as n_display in most cases. Test with, e.g., sqrt(d+d^2)^2.
 // Would probably be better to maintain explicit error bounds.
 // When changing either of these on the fly, need to call generate_static_taylors().
@@ -325,4 +334,11 @@ com.lightandmatter.LeviCivita.generate_static_taylors = function () {
     x.taylor.exp = x.generate_taylor(function(i,l){if (i===0) {return 1;} else {return l/i;}}); // e^x
 };
 
-com.lightandmatter.LeviCivita.generate_static_taylors();
+com.lightandmatter.LeviCivita.change_n = function (n) {
+  if (arguments.length==0) {return com.lightandmatter.LeviCivita.n_display;}
+  com.lightandmatter.LeviCivita.n_display = n;
+  com.lightandmatter.LeviCivita.n = 2*n;
+  com.lightandmatter.LeviCivita.generate_static_taylors();
+};
+
+com.lightandmatter.LeviCivita.change_n(5);

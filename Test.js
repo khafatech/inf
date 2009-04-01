@@ -4,8 +4,8 @@
 // This file provides a constructor, com.lightandmatter.Test.
 //
 // to do:
-//   tolerate small rounding errors
 //   fix the ones that actually fail
+//   After implementing lc_series operator, use it in tests to make sure specific coefficients of series expansions come out right.
 
 var com;
 if (!com) {com = {};}
@@ -20,19 +20,26 @@ com.lightandmatter.Test =
                        //    [string,string] ... test that the two strings evaluate to the same result
                        //    [string] ... test that the computation doesn't result in null or undefined
                        //    [] ... do nothing (placeholder for end of list, to avoid forgetting commas)
+                       // The tolerance for comparisons is set by an optional third argument, eps.
+                       // The magnitude of the difference between the results should be no more than eps.
+                       // Eps defaults to 10^-12.
                        ["2+2",4],
                        ["1<3",true],
                        ["1>3",false],
                        ["1+d"],
                        ["1/d"],
                        ["d+d","2*d"],
+                       ["d^2<d",true],
+                       ["sqrt d > d",true],
                        ["2*d>d",true],
-                       ["a:6*7;a+5",47],
-                       ["f x:x^2"],            // define f for next test
-                       ["f(f(2))",16],         // composition of functions
+                       ["a:6*7;a+5",47],       // semicolon operator and side-effects
+                       ["zzz:1;zzz=1",true],   // nopromote flag
+                       ["f x:x^2;f(f(2))",16], // composition of functions
                        ["sqrt(-1)","i"],
                        ["((1+i)/(sqrt 2))^8",1],
-                       ["zzz:1;zzz=1",true],       // fails**************
+                       ["(1,2,3)=(1,2,3)",true],
+                       ["(1,2,3)=(1,2,4)",false],
+                       ["((1,2),(3,4))=((1,2),(3,4))",true],
                        // "foo",
                        // "2d",  // the parser doesn't return anything for this line
                        [] // end of list
@@ -51,25 +58,34 @@ com.lightandmatter.Test =
           var x,y,rx,ry;
           x = do_parse(line);
           rx = x[0];
+          rx = unstring_if_possible(rx);
           var parser_errors = x[1];
           var unequal = false;
+          var diff;
 
-          if (test.length>=1) {
+          if (test.length>=2) { // comparing against a second expression
+            var eps = 1e-12; // tolerance for comparisons, see explanation above
+            if (test.length>=3) {eps=test[2];}
             if (typeof(test[1])=='string') {
               y = do_parse(test[1]);
               ry = y[0];
               parser_errors += y[1];
+              ry = unstring_if_possible(ry);
               if (typeof(rx)=='string' || typeof(ry)=='string') {
                 unequal = rx.toString != ry.toString;
               }
               else {
-                unequal = !com.lightandmatter.Num.binop('=',rx,ry);
+                diff = com.lightandmatter.Num.binop('-',rx,ry);
+                if (typeof(diff)=='number') {diff=Math.abs(diff);} else {diff=diff.abs();}
+                unequal = com.lightandmatter.Num.binop('>',diff,eps);
               }
             }
-            else {
+            else { // compare expression versus native JS type
               ry = test[1];
               if (typeof(test[1])=='number') {
-                unequal = (rx != ry);
+                diff = com.lightandmatter.Num.binop('-',rx,ry);
+                if (typeof(diff)=='number') {diff=Math.abs(diff);} else {diff=diff.abs();}
+                unequal = com.lightandmatter.Num.binop('>',diff,eps);
               }
               if (typeof(test[1])=='boolean') {
                 if (rx=='true') {rx=true}
@@ -80,17 +96,38 @@ com.lightandmatter.Test =
           }
 
           // TODO - add style
-          testing_output += "testing " + line + "<br/>";
+          testing_output += "testing " + html_armor(line);
+          if (test.length>=2) {testing_output += ' = '+html_armor(test[1]);}
           if (unequal) {
-            testing_output += "Unequal expressions, "+rx+" and "+ry+", types "+typeof(rx)+','+typeof(ry)+"<br/>";
+            testing_output += "<br/>Unequal expressions, "+rx+" and "+ry+", types "
+                               +typeof(rx)+','+typeof(ry)
+                               +"**************** fail *******************<br/>";
           }
-
+          else {
+            testing_output += '...pass';
+          }
+          testing_output += "<br/>";
           if (parser_errors) {
             testing_output += "Parser Exception: " + parser_errors + "<br/>";
           }
           testing_output += rx + "<br/>";
           output_element.innerHTML = testing_output;
         }
+      }
+
+      function html_armor(s) {
+        if (typeof(s)!=='string') {return s;}
+        return s.replace(new RegExp('\<',"g"),'&lt;');
+      }
+
+      function unstring_if_possible(s) {
+        if (typeof(s)!=='string') {return s;}
+        if (s=='0') {return 0;} // In some browsers, parseFloat() returns 0 on error, so eliminate that case.
+        // parseFloat ignores trailing stuff that it can't parse, so check for that:
+        if (s.match(/[di\(\)]/)) {return s;}
+        var n = parseFloat(s);
+        if (n===0 || isNaN(n)) {n= s;}
+        return n;
       }
   
       function do_parse(line) {
