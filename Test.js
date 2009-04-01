@@ -40,6 +40,10 @@ com.lightandmatter.Test =
                        ["(1,2,3)=(1,2,3)",true],
                        ["(1,2,3)=(1,2,4)",false],
                        ["((1,2),(3,4))=((1,2),(3,4))",true],
+                       ["((1,2),3)=(1,2,3)",false], // closed_array, parens have extra significance beyond grouping in the case of arrays
+                       ["array[1/(1-d)]=[[0,1],[1,1],[2,1],[3,1],[4,1]]",true],
+                       ["array(exp(d))=[[0,1],[1,1],[2,0.5],[3,0.16666666666666666],[4,0.041666666666666664]]",true],
+                       ["[sqrt(d+d^2)]^2","d+d^2"],
                        // "foo",
                        // "2d",  // the parser doesn't return anything for this line
                        [] // end of list
@@ -50,13 +54,14 @@ com.lightandmatter.Test =
       // whatever is in debug2 will be overwritten. It could easily be changed to append 
       // results to the debug2 div.
       var testing_output = "";
+      var nn =  com.lightandmatter.Num;
 
       for each (var test in testing_lines) {
         if (test.length>0) {
           line = test[0];
 
           var x,y,rx,ry;
-          x = do_parse(line);
+          x = do_parse(lexer,parser,line);
           rx = x[0];
           rx = unstring_if_possible(rx);
           var parser_errors = x[1];
@@ -67,25 +72,31 @@ com.lightandmatter.Test =
             var eps = 1e-12; // tolerance for comparisons, see explanation above
             if (test.length>=3) {eps=test[2];}
             if (typeof(test[1])=='string') {
-              y = do_parse(test[1]);
+              y = do_parse(lexer,parser,test[1]);
               ry = y[0];
               parser_errors += y[1];
               ry = unstring_if_possible(ry);
               if (typeof(rx)=='string' || typeof(ry)=='string') {
-                unequal = rx.toString != ry.toString;
+                unequal = rx.toString() != ry.toString();
               }
               else {
                 diff = com.lightandmatter.Num.binop('-',rx,ry);
+                //document.getElementById("debug").innerHTML += 'diff='+diff+nn.num_type(diff);
                 if (typeof(diff)=='number') {diff=Math.abs(diff);} else {diff=diff.abs();}
-                unequal = com.lightandmatter.Num.binop('>',diff,eps);
+                unequal = nn.binop('>',diff,eps);
               }
             }
             else { // compare expression versus native JS type
               ry = test[1];
               if (typeof(test[1])=='number') {
-                diff = com.lightandmatter.Num.binop('-',rx,ry);
-                if (typeof(diff)=='number') {diff=Math.abs(diff);} else {diff=diff.abs();}
-                unequal = com.lightandmatter.Num.binop('>',diff,eps);
+                if (rx!==null && ry!==null) {
+                  diff = com.lightandmatter.Num.binop('-',rx,ry);
+                  if (typeof(diff)=='number') {diff=Math.abs(diff);} else {diff=diff.abs();}
+                  unequal = nn.binop('>',diff,eps);
+                }
+                else {
+                  unequal = true;
+                }
               }
               if (typeof(test[1])=='boolean') {
                 if (rx=='true') {rx=true}
@@ -110,7 +121,9 @@ com.lightandmatter.Test =
           if (parser_errors) {
             testing_output += "Parser Exception: " + parser_errors + "<br/>";
           }
-          testing_output += rx + "<br/>";
+          testing_output += rx;
+          if (test.length>=2) {testing_output += ' = '+ry;}
+          testing_output += "<br/>";
           output_element.innerHTML = testing_output;
         }
       }
@@ -130,14 +143,15 @@ com.lightandmatter.Test =
         return n;
       }
   
-      function do_parse(line) {
+      function do_parse(lexer,parser,line) {
           lexer.change_text(line);
           parser.parse(lexer.tokens,lexer.props);
           
           var result = "";
           var parser_errors = "";
           try {
-            result = parser.toString();
+            //result = parser.toString();
+            result = parser.tree_to_string(parser.tree);
           }
           catch (e) {
             parser_errors += e;

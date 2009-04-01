@@ -58,9 +58,14 @@ com.lightandmatter.Num.promote = function(x,y) {
       return [null,null,null,["unable to do type promotion, types="+tx+','+ty]];
     };
 
-com.lightandmatter.Num.binop = function(op,a,b,nopromote) { // boolean nopromote is optional
-        if (arguments.length<4 || nopromote===undefined || nopromote===null) {nopromote=false;}
+com.lightandmatter.Num.binop = function(op,a,b,options) { // options arg is optional
         var nn = com.lightandmatter.Num;
+        var nopromote = false;
+        var closed_array = false;
+        if (arguments.length>=4) {
+          if (options.nopromote===true) {nopromote=true;}
+          if (options.closed_array===true) {closed_array=true;}
+        }
         var original_b = b;
         var prom,t;
         if (nn.num_type(a)=='a' || nn.num_type(b)=='a') {t='a';} // could be, e.g., 1,2,3, which gets evaluated as (1,2),3
@@ -73,8 +78,9 @@ com.lightandmatter.Num.binop = function(op,a,b,nopromote) { // boolean nopromote
         if (op==';') {
           return b;
         }
+        if (a==null || b==null) {return null;}
         if (op==',') {
-          if (nn.num_type(a)=='a') {
+          if (nn.num_type(a)=='a' && !closed_array) {
             a.push(b); // This has the side-effect of altering the lhs, but I think that's okay, because we won't retain any refs to it.
             return a;
           }

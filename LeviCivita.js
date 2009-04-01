@@ -61,6 +61,11 @@ com.lightandmatter.LeviCivita =
       }
       return l.join('+');
     };
+    c.abs = function() {
+      var z = c.clone();
+      if (c.nn.num_type(z.f)=='r') {z.f=Math.abs(z.f);} else {z.f=z.f.abs();}
+      return z;
+    };
     c.neg = function() {
       var z = c.clone();
       z.f = c.nn.binop('-',0,z.f);

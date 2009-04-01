@@ -148,12 +148,17 @@ com.lightandmatter.Parser =
               if (! skip) {return ['binop',name,lhs,rhs,start,end,j];}
             }
           }
-          if ((step==1 && tokens[j]=='(') || (step==-1 && tokens[j]==')')) {paren_depth++;}
-          if ((step==1 && tokens[j]==')') || (step==-1 && tokens[j]=='(')) {paren_depth--;}
+          if ((step==1 && this.is_left_paren(tokens[j]))  || (step==-1 && this.is_right_paren(tokens[j]))) {paren_depth++;}
+          if ((step==1 && this.is_right_paren(tokens[j])) || (step==-1 && this.is_left_paren(tokens[j])) ) {paren_depth--;}
         }
         if (paren_depth !== 0) {this.errs.push(['unbalanced parentheses',start,end]); return null;}
       }// end of loop over binary operators
-      if (tokens[start]=='(' && tokens[end]==')') {return this.parse_part(tokens,start+1,end-1);}
+      if (this.is_left_paren(tokens[start]) && this.is_right_paren(tokens[end])) {
+        if (this.paren_style(tokens[start])!=this.paren_style(tokens[end])) {this.errs.push(['mismatched style of parentheses'],start,end);}
+        var inside = this.parse_part(tokens,start+1,end-1);
+        if (inside[0]=='binop' && inside[1]==',') {if (inside[7]===undefined) {inside[7]={};} inside[7].closed_array=true;}
+        return inside;
+      }
       for (var i=0; i<this.unop.length; i++) {
         var u = this.unop[i];
         var name = u.name;
@@ -210,7 +215,7 @@ com.lightandmatter.Parser =
       }
     };
 
-    this.tree_to_string = function(tree) {
+    this.tree_to_string = function(tree) { // badly named, doesn't really compute string
       var what = tree[0];
       if (what==='leaf') {
         var props = tree[2];
@@ -219,7 +224,7 @@ com.lightandmatter.Parser =
           var name = props.name;
           var value = this.sym[name];
           if (this.sym_side_effect[name]!==undefined) {value=this.sym_side_effect[name]();}
-          if (value===undefined) {this.errs.push(["undefined variable: \""+name+'"']); debug('had undefined variable'+this.tree_to_debug_string(tree)); return null;} //qwe debug() only
+          if (value===undefined) {this.errs.push(["undefined variable: \""+name+'"']); return null;}
           return value;
         }
         return null;
@@ -231,6 +236,8 @@ com.lightandmatter.Parser =
         var rhs = tree[3];
         var start = tree[4]; // for error messages, if necessary
         var end = tree[5];
+        var ca = false;
+        if (lhs[7]!==undefined && lhs[7].closed_array===true) {ca=true;}
         var function_def = op==':' && rhs[0]=='lambda';
         var a;
         var b;
@@ -265,7 +272,7 @@ com.lightandmatter.Parser =
           }
         }// endif :
         // If it's not : operator, we fall through to here.
-        return this.nn.binop(op,a,b,this.find_binop(op).nopromote);
+        return this.nn.binop(op,a,b,{'nopromote':this.find_binop(op).nopromote,'closed_array':ca});
       }
       if (what==='unop') {
         var f = tree[1];
@@ -321,6 +328,15 @@ com.lightandmatter.Parser =
           }
         }
       }
+      return null;
+    };
+
+    this.is_left_paren  = function (c) { return c=='(' || c=='[' || c=='{';   };
+    this.is_right_paren = function (c) { return c==')' || c==']' || c=='}';   };
+    this.paren_style = function(c) {
+      if (c=='(' || c==')') {return 1;}
+      if (c=='[' || c==']') {return 2;}
+      if (c=='{' || c=='}') {return 3;}
       return null;
     };
 

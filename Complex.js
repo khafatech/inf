@@ -65,7 +65,7 @@ com.lightandmatter.Complex =
       }
       return c.ln().mul(b).exp();
     };
-    c.sqrt = function() {return c.pow(com.lightandmatter.Complex(0.5,0));};
+    c.sqrt = function() {var z= c.pow(com.lightandmatter.Complex(0.5,0)); if (c.y==0 && c.x<0) {z.x=0;} return z;};
     c.floor = function() {return com.lightandmatter.Complex(Math.floor(c.x),Math.floor(c.y));};
     c.ceil = function() {return com.lightandmatter.Complex(Math.ceil(c.x),Math.ceil(c.y));};
 
