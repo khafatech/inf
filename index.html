@@ -39,9 +39,10 @@ Type an expression at the &gt; prompt and hit Enter. For more documentation, scr
           lexer.change_text(t);
          })
       });
-      //if (window.location.search == "?test") {com.lightandmatter.Test(document.getElementById("debug2"),lexer,parser);}
-      // ... apparently window.location.search doesn't work in IE; does the following work in IE?:
-      if (location.search == "?test") {com.lightandmatter.Test(document.getElementById("debug2"),lexer,parser);}
+      if ( window.location.search == "?test" ) { // doesn't work in IE
+        var r=com.lightandmatter.Test(document.getElementById("debug2"),lexer,parser);
+        document.getElementById("debug").innerHTML += "Passed "+r[0]+"/"+r[1]+" tests."
+      }
     }
   </script>
 

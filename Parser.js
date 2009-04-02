@@ -69,7 +69,7 @@ com.lightandmatter.Parser =
     this.sym = {
       'pi':Math.PI,
       'i':com.lightandmatter.Complex(0.0,1.0),
-      'd':com.lightandmatter.LeviCivita(1.0,1.0,[[0,1]]),
+      'd':com.lightandmatter.LeviCivita(1.0,1.0,[[0,1]])
     };
     // get and set the variable by calling this function rather that by looking something up in the symbol table:
     this.sym_side_effect = {
@@ -78,7 +78,7 @@ com.lightandmatter.Parser =
     this.builtin_constants = {}; // They're not allowed to overwrite these.
     for (var builtin in this.sym) {
       this.builtin_constants[builtin] = true;
-    };
+    }
 
     this.parse = function(tokens,props) {
       this.errs = [];
@@ -216,6 +216,7 @@ com.lightandmatter.Parser =
     };
 
     this.tree_to_string = function(tree) { // badly named, doesn't really compute string
+      if (tree===null) {return null;}
       var what = tree[0];
       if (what==='leaf') {
         var props = tree[2];
@@ -292,7 +293,7 @@ com.lightandmatter.Parser =
               this.sym[b] = x;
               var y = this.tree_to_string(e);
               delete this.sym.b;
-              if (clobber!==undefined) {this.sym[b]=clobber}
+              if (clobber!==undefined) {this.sym[b]=clobber;}
               return y;
             }
             // Some functions are implemented only in LeviCivita, so promote and use the LC function:
@@ -345,7 +346,7 @@ com.lightandmatter.Parser =
         if (this.binop[i].name==op) {return this.binop[i];}
       }
       return undefined;
-    }
+    };
 
     this.props_to_string = function(props) {
       if (props===undefined) {return null;}
@@ -354,7 +355,7 @@ com.lightandmatter.Parser =
 
     this.delete_function = function(f) {
       for (var i in this.unop) {
-        if (this.unop[i].name==f) {this.unop.splice(i,i); return}
+        if (this.unop[i].name==f) {this.unop.splice(i,i); return;}
       }
     };
 
@@ -366,7 +367,7 @@ com.lightandmatter.Parser =
     this.rename_var = function(tree,x,y) {
       var what = tree[0];
       if (what==='leaf') {
-        if (tree[1]!=x) {return tree}
+        if (tree[1]!=x) {return tree;}
         return [tree[0],y,{'name':y,'num':null}];
       }
       if (what==='error') {return tree;}

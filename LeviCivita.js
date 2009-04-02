@@ -125,7 +125,7 @@ com.lightandmatter.LeviCivita =
       return c.nn.binop('cmp',c.nn.binop('-',c,b),0);
     };
     c.mul = function (b) {
-      if (c.nn.is_zero(c) || c.nn.is_zero(b)) {return 0}
+      if (c.nn.is_zero(c) || c.nn.is_zero(b)) {return 0;}
       var z = com.lightandmatter.LeviCivita(c.nn.binop('*',b.f,c.f),c.nn.binop('+',b.l,c.l));
       z.s = [];
       for (var i in b.s) {
@@ -313,13 +313,6 @@ com.lightandmatter.LeviCivita =
   };
 
 
-// Don't set the following directly. Use change_n().
-com.lightandmatter.LeviCivita.n; // number of terms to keep in the series
-com.lightandmatter.LeviCivita.n_display;
-    // only display this many, so the user isn't likely to see the results of truncation; also, only use this many terms in results of array operator
-// I think n should be twice as big as n_display in most cases. Test with, e.g., sqrt(d+d^2)^2.
-// Would probably be better to maintain explicit error bounds.
-// When changing either of these on the fly, need to call generate_static_taylors().
 
 com.lightandmatter.LeviCivita.generate_taylor = function (f) {
       var m = com.lightandmatter.LeviCivita.n;
@@ -340,10 +333,18 @@ com.lightandmatter.LeviCivita.generate_static_taylors = function () {
 };
 
 com.lightandmatter.LeviCivita.change_n = function (n) {
-  if (arguments.length==0) {return com.lightandmatter.LeviCivita.n_display;}
+  if (arguments.length===0) {return com.lightandmatter.LeviCivita.n_display;}
   com.lightandmatter.LeviCivita.n_display = n;
   com.lightandmatter.LeviCivita.n = 2*n;
   com.lightandmatter.LeviCivita.generate_static_taylors();
+
+  // com.lightandmatter.LeviCivita.n is number of terms to keep in the series
+  //com.lightandmatter.LeviCivita.n_display --
+  //    only display this many, so the user isn't likely to see the results of truncation; also, only use this many terms in results of array operator
+  // I think n should be twice as big as n_display in most cases. Test with, e.g., sqrt(d+d^2)^2.
+  // Would probably be better to maintain explicit error bounds.
+  // When changing either of these on the fly, need to call generate_static_taylors().
+
 };
 
 com.lightandmatter.LeviCivita.change_n(5);

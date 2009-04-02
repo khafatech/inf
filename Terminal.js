@@ -57,20 +57,20 @@ if (!com.lightandmatter) {com.lightandmatter = {};}
 com.lightandmatter.Terminal =
   function (args) {
     this.container = args.container;
-    this.response = function(terminal) {return ""};
-    if ('response' in args) {this.response = args.response}
+    this.response = function(terminal) {return "";};
+    if ('response' in args) {this.response = args.response;}
     this.prompt = '&gt; ';
-    if ('prompt' in args) {this.prompt = args.prompt}
+    if ('prompt' in args) {this.prompt = args.prompt;}
     this.input_width = 100;
-    if ('input_width' in args) {this.input_width = args.input_width}
+    if ('input_width' in args) {this.input_width = args.input_width;}
     this.style = "font-family:serif;";
-    if ('style' in args) {this.style = args.style}
-    this.input_style = "border-style:none;"
-    if ('input_style' in args) {this.input_style = args.input_style}
-    this.above_style = ""
-    if ('above_style' in args) {this.above_style = args.above_style}
+    if ('style' in args) {this.style = args.style;}
+    this.input_style = "border-style:none;";
+    if ('input_style' in args) {this.input_style = args.input_style;}
+    this.above_style = "";
+    if ('above_style' in args) {this.above_style = args.above_style;}
     this.when_changed = function() {};
-    if ('when_changed' in args) {this.when_changed = args.when_changed}
+    if ('when_changed' in args) {this.when_changed = args.when_changed;}
 
     var scroll_div = document.createElement("div");
     scroll_div.setAttribute("style","width:100%; height:100%; overflow:auto"); // width is required in order to get the scrollbar
@@ -105,17 +105,17 @@ com.lightandmatter.Terminal =
         e = window.event;
       }
       // IE has keyCode, Firefox has charCode
-      try { code = e.charCode } catch (foo) {};
-      try { code = e.keyCode  } catch (foo) {}; // ... but this doesn't even work in IE...??? I get 'keyCode' is null or not an object
+      try { code = e.charCode; } catch (foo) {}
+      try { code = e.keyCode;  } catch (foo) {} // ... but this doesn't even work in IE...??? I get 'keyCode' is null or not an object
       var enter = 13; // unicode for enter key
       if (code==enter) {
         var u = this.value;  // user's input, not including the most recent character
         u = u.replace(new RegExp("<","g"),"&lt;");
         t.input = u;
         t.history.push(u);
-        terminal =   terminal
-                   + '<span style="' + t.style + t.above_style + '">' + t.prompt + " " +  u + "</span><br/>" 
-                   + '<span style="' + t.style + t.above_style + '">' + t.response(t) + "</span><br/>";
+        terminal =   terminal +
+                    '<span style="' + t.style + t.above_style + '">' + t.prompt + " " +  u + "</span><br/>"  +
+                    '<span style="' + t.style + t.above_style + '">' + t.response(t) + "</span><br/>";
         this.value=''; // clear input field
         t.terminal_div.innerHTML = terminal;
         bottom.scrollIntoView(false);

@@ -19,11 +19,13 @@ com.lightandmatter.Test =
                        //    [string,native] ... test that computing string gives an output that's equal to the native javascript typpe (number or boolean)
                        //    [string,string] ... test that the two strings evaluate to the same result
                        //    [string] ... test that the computation doesn't result in null or undefined
+                       //    [string,null] ... tests that the computation does result in null
                        //    [] ... do nothing (placeholder for end of list, to avoid forgetting commas)
                        // The tolerance for comparisons is set by an optional third argument, eps.
                        // The magnitude of the difference between the results should be no more than eps.
                        // Eps defaults to 10^-12.
                        ["2+2",4],
+                       ["2d",null],
                        ["1<3",true],
                        ["1>3",false],
                        ["1+d"],
@@ -47,90 +49,11 @@ com.lightandmatter.Test =
                        // "foo",
                        // "2d",  // the parser doesn't return anything for this line
                        [] // end of list
-                       ]
-
-      // this variable hold the input and output for the whole session.
-      // I tried to make it work like the private variable "terminal" in Terminal.js
-      // whatever is in debug2 will be overwritten. It could easily be changed to append 
-      // results to the debug2 div.
-      var testing_output = "";
-      var nn =  com.lightandmatter.Num;
-
-      for each (var test in testing_lines) {
-        if (test.length>0) {
-          line = test[0];
-
-          var x,y,rx,ry;
-          x = do_parse(lexer,parser,line);
-          rx = x[0];
-          rx = unstring_if_possible(rx);
-          var parser_errors = x[1];
-          var unequal = false;
-          var diff;
-
-          if (test.length>=2) { // comparing against a second expression
-            var eps = 1e-12; // tolerance for comparisons, see explanation above
-            if (test.length>=3) {eps=test[2];}
-            if (typeof(test[1])=='string') {
-              y = do_parse(lexer,parser,test[1]);
-              ry = y[0];
-              parser_errors += y[1];
-              ry = unstring_if_possible(ry);
-              if (typeof(rx)=='string' || typeof(ry)=='string') {
-                unequal = rx.toString() != ry.toString();
-              }
-              else {
-                diff = com.lightandmatter.Num.binop('-',rx,ry);
-                //document.getElementById("debug").innerHTML += 'diff='+diff+nn.num_type(diff);
-                if (typeof(diff)=='number') {diff=Math.abs(diff);} else {diff=diff.abs();}
-                unequal = nn.binop('>',diff,eps);
-              }
-            }
-            else { // compare expression versus native JS type
-              ry = test[1];
-              if (typeof(test[1])=='number') {
-                if (rx!==null && ry!==null) {
-                  diff = com.lightandmatter.Num.binop('-',rx,ry);
-                  if (typeof(diff)=='number') {diff=Math.abs(diff);} else {diff=diff.abs();}
-                  unequal = nn.binop('>',diff,eps);
-                }
-                else {
-                  unequal = true;
-                }
-              }
-              if (typeof(test[1])=='boolean') {
-                if (rx=='true') {rx=true}
-                if (rx=='false') {rx=false}
-                unequal = (rx!=ry);
-              }
-            }
-          }
-
-          // TODO - add style
-          testing_output += "testing " + html_armor(line);
-          if (test.length>=2) {testing_output += ' = '+html_armor(test[1]);}
-          if (unequal) {
-            testing_output += "<br/>Unequal expressions, "+rx+" and "+ry+", types "
-                               +typeof(rx)+','+typeof(ry)
-                               +"**************** fail *******************<br/>";
-          }
-          else {
-            testing_output += '...pass';
-          }
-          testing_output += "<br/>";
-          if (parser_errors) {
-            testing_output += "Parser Exception: " + parser_errors + "<br/>";
-          }
-          testing_output += rx;
-          if (test.length>=2) {testing_output += ' = '+ry;}
-          testing_output += "<br/>";
-          output_element.innerHTML = testing_output;
-        }
-      }
+                       ];
 
       function html_armor(s) {
         if (typeof(s)!=='string') {return s;}
-        return s.replace(new RegExp('\<',"g"),'&lt;');
+        return s.replace(new RegExp('<',"g"),'&lt;');
       }
 
       function unstring_if_possible(s) {
@@ -159,5 +82,93 @@ com.lightandmatter.Test =
           return [result,parser_errors];
 
       }
+
+      // this variable hold the input and output for the whole session.
+      // I tried to make it work like the private variable "terminal" in Terminal.js
+      // whatever is in debug2 will be overwritten. It could easily be changed to append 
+      // results to the debug2 div.
+      var testing_output = "";
+      var nn =  com.lightandmatter.Num;
+
+      var n_passed = 0;
+      var n_tried = 0;
+      for (var i in testing_lines) {
+        test = testing_lines[i];
+        if (test.length>0) {
+          n_tried += 1;
+          line = test[0];
+
+          var x,y,rx,ry;
+          x = do_parse(lexer,parser,line);
+          rx = x[0];
+          rx = unstring_if_possible(rx);
+          var parser_errors = x[1];
+          var unequal = false;
+          var diff;
+          ry = null;
+
+          if (test.length>=2) { // comparing against a second expression
+            var eps = 1e-12; // tolerance for comparisons, see explanation above
+            if (test.length>=3) {eps=test[2];}
+            if (typeof(test[1])=='string') {
+              y = do_parse(lexer,parser,test[1]);
+              ry = y[0];
+              parser_errors += y[1];
+              ry = unstring_if_possible(ry);
+              if (typeof(rx)=='string' || typeof(ry)=='string') {
+                unequal = rx.toString() != ry.toString();
+              }
+              else {
+                diff = com.lightandmatter.Num.binop('-',rx,ry);
+                //document.getElementById("debug").innerHTML += 'diff='+diff+nn.num_type(diff);
+                if (typeof(diff)=='number') {diff=Math.abs(diff);} else {diff=diff.abs();}
+                unequal = nn.binop('>',diff,eps);
+              }
+            }
+            if (test[1]===null) {
+              unequal = rx!==null;
+            }
+            if (typeof(test[1])=='boolean') {
+              unequal = (rx!=test[1]);
+            }
+            if (typeof(test[1])=='number') {
+              ry = test[1];
+              if (typeof(test[1])=='number') {
+                if (rx!==null && ry!==null) {
+                  diff = com.lightandmatter.Num.binop('-',rx,ry);
+                  if (typeof(diff)=='number') {diff=Math.abs(diff);} else {diff=diff.abs();}
+                  unequal = nn.binop('>',diff,eps);
+                }
+                else {
+                  unequal = true;
+                }
+              }
+            }
+          }
+
+          // TODO - add style
+          testing_output += "testing " + html_armor(line);
+          if (test.length>=2) {testing_output += ' = '+html_armor(test[1]);}
+          if (unequal) {
+            testing_output += "<br/>Unequal expressions, "+rx+" and "+ry+", types "+
+                               typeof(rx)+','+typeof(ry)+
+                               "**************** fail *******************<br/>";
+          }
+          else {
+            testing_output += '...pass';
+            n_passed += 1;
+          }
+          testing_output += "<br/>";
+          if (parser_errors) {
+            testing_output += "Parser Exception: " + parser_errors + "<br/>";
+          }
+          testing_output += rx;
+          if (test.length>=2) {testing_output += ' = '+ry;}
+          testing_output += "<br/>";
+          output_element.innerHTML = testing_output;
+        }
+      }
+      return [n_passed,n_tried];
+
     
   };

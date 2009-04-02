@@ -78,7 +78,7 @@ com.lightandmatter.Num.binop = function(op,a,b,options) { // options arg is opti
         if (op==';') {
           return b;
         }
-        if (a==null || b==null) {return null;}
+        if (a===null || b===null) {return null;}
         if (op==',') {
           if (nn.num_type(a)=='a' && !closed_array) {
             a.push(b); // This has the side-effect of altering the lhs, but I think that's okay, because we won't retain any refs to it.
