@@ -49,6 +49,7 @@
 //   Handle multi-line responses correctly.
 //   Let everything be wrapped in <p></p> if they want that, rather than just using <br/> tags.
 //   If style includes color, does that work? Maybe not, need to apply that style to the whole hierarchy of divs.
+//   Fix strange behavior when you paste text in. I think this is because it's assuming it's getting a keyboard event for every character.
 
 var com;
 if (!com) {com = {};}
@@ -95,6 +96,7 @@ com.lightandmatter.Terminal =
     inp.value = '';
 
     this.history = [];
+    this.in_history = 0;
 
     var t = this; // In the event-handler, "this" means the inp object, not the Terminal, so provide this closure.
     inp.onkeypress = function(e) {
@@ -106,13 +108,28 @@ com.lightandmatter.Terminal =
       }
       // IE has keyCode, Firefox has charCode
       try { code = e.charCode; } catch (foo) {}
-      try { code = e.keyCode;  } catch (foo) {} // ... but this doesn't even work in IE...??? I get 'keyCode' is null or not an object
+      try { code = e.keyCode;  } catch (foo) {}
+      if (code==0) {try { code = e.which;  } catch (foo) {}} // necessary for ctl keys in FF
       var enter = 13; // unicode for enter key
+      var up_arrow = 38;
+      var down_arrow = 40;
+      var ch = String.fromCharCode(code);
+      var go_up = (e.ctrlKey && ch=='p') || (code==up_arrow);
+      var go_down = (e.ctrlKey && ch=='n') || (code==down_arrow);
+      if (go_up || go_down) {
+        if (go_up) {t.in_history --;}
+        if (go_down) {t.in_history ++;}
+        if (t.in_history<0) {t.in_history=0;}
+        if (t.in_history>t.history.length) {t.in_history=t.history.length;}
+        if (t.in_history<t.history.length) {this.value = t.history[t.in_history];}
+        if (t.in_history==t.history.length) {this.value = '';}
+      }
       if (code==enter) {
         var u = this.value;  // user's input, not including the most recent character
         u = u.replace(new RegExp("<","g"),"&lt;");
         t.input = u;
         t.history.push(u);
+        t.in_history = t.history.length;
         terminal =   terminal +
                     '<span style="' + t.style + t.above_style + '">' + t.prompt + " " +  u + "</span><br/>"  +
                     '<span style="' + t.style + t.above_style + '">' + t.response(t) + "</span><br/>";
@@ -120,7 +137,7 @@ com.lightandmatter.Terminal =
         t.terminal_div.innerHTML = terminal;
         bottom.scrollIntoView(false);
       }
-      return (code!=enter);
+      return (!(code==enter || go_up || go_down)); // in these three cases, prevent the browser from doing other things, e.g., printing if we do control-p
     };
     inp.onkeyup = function(e) {
       t.when_changed(this.value);

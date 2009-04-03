@@ -26,7 +26,7 @@ com.lightandmatter.Lexer =
     var num_regex    = new RegExp("^"+num+"$");
 
     this.change_text = function (t) {
-      this.tokens = t.match(  new RegExp("("+name+"|[^0-9. ]|"+num+")",'g')  );
+      this.tokens = t.match(  new RegExp("("+name+"|(?:\=\=)|[^0-9. ]|"+num+")",'g')  );
       if (this.tokens !== null) {
         for (var i=0; i<this.tokens.length; i++) {
           this.props[i] = {

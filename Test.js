@@ -19,7 +19,7 @@ com.lightandmatter.Test =
                        //    [string,native] ... test that computing string gives an output that's equal to the native javascript typpe (number or boolean)
                        //    [string,string] ... test that the two strings evaluate to the same result
                        //    [string] ... test that the computation doesn't result in null or undefined
-                       //    [string,null] ... tests that the computation does result in null
+                       //    [string,null] ... tests that the computation does result in null or NaN
                        //    [] ... do nothing (placeholder for end of list, to avoid forgetting commas)
                        // The tolerance for comparisons is set by an optional third argument, eps.
                        // The magnitude of the difference between the results should be no more than eps.
@@ -34,17 +34,20 @@ com.lightandmatter.Test =
                        ["d^2<d",true],
                        ["sqrt d > d",true],
                        ["2*d>d",true],
-                       ["a:6*7;a+5",47],       // semicolon operator and side-effects
-                       ["zzz:1;zzz=1",true],   // nopromote flag
-                       ["f x:x^2;f(f(2))",16], // composition of functions
+                       ["a=6*7;a+5",47],       // semicolon operator and side-effects
+                       ["zzz=1;zzz==1",true],   // nopromote flag
+                       ["f x=x^2;f(f(2))",16], // composition of functions
                        ["sqrt(-1)","i"],
                        ["((1+i)/(sqrt 2))^8",1],
-                       ["(1,2,3)=(1,2,3)",true],
-                       ["(1,2,3)=(1,2,4)",false],
-                       ["((1,2),(3,4))=((1,2),(3,4))",true],
-                       ["((1,2),3)=(1,2,3)",false], // closed_array, parens have extra significance beyond grouping in the case of arrays
-                       ["array[1/(1-d)]=[[0,1],[1,1],[2,1],[3,1],[4,1]]",true],
-                       ["array(exp(d))=[[0,1],[1,1],[2,0.5],[3,0.16666666666666666],[4,0.041666666666666664]]",true],
+                       ["(1,2,3)==(1,2,3)",true],
+                       ["(1,2,3)==(1,2,4)",false],
+                       ["((1,2),(3,4))==((1,2),(3,4))",true],
+                       ["((1,2),3)==(1,2,3)",false], // closed_array, parens have extra significance beyond grouping in the case of arrays
+                       ["array[1/(1-d)]==[[0,1],[1,1],[2,1],[3,1],[4,1]]",true],
+                       ["array(exp(d))==[[0,1],[1,1],[2,0.5],[3,0.16666666666666666],[4,0.041666666666666664]]",true],
+                       ["array cos sin cos sin d==[[0,0.6663669686453382],[2,0.2014303014197919],[4,-0.0298164555452246],[6,-0.05417070055498078],[8,0.047167710820525316]]",true],
+                       ["(1+d)^pi"],
+                       ["d^pi",null],
                        ["[sqrt(d+d^2)]^2","d+d^2"],
                        // "foo",
                        // "2d",  // the parser doesn't return anything for this line
@@ -126,7 +129,7 @@ com.lightandmatter.Test =
               }
             }
             if (test[1]===null) {
-              unequal = rx!==null;
+              unequal = rx!==null && !(typeof(rx)=='number' && isNaN(rx));
             }
             if (typeof(test[1])=='boolean') {
               unequal = (rx!=test[1]);
@@ -155,15 +158,15 @@ com.lightandmatter.Test =
                                "**************** fail *******************<br/>";
           }
           else {
-            testing_output += '...pass';
+            testing_output += '...pass -- ';
             n_passed += 1;
           }
-          testing_output += "<br/>";
+          //testing_output += "<br/>";
           if (parser_errors) {
             testing_output += "Parser Exception: " + parser_errors + "<br/>";
           }
           testing_output += rx;
-          if (test.length>=2) {testing_output += ' = '+ry;}
+          if (test.length>=2 && typeof(test[1])!='boolean') {testing_output += ' = '+ry;}
           testing_output += "<br/>";
           output_element.innerHTML = testing_output;
         }

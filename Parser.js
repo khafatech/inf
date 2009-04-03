@@ -31,11 +31,11 @@ com.lightandmatter.Parser =
     // in order from lowest to highest precedence:
     this.binop = [
       {'name':';','nopromote':true},
-      {'name':':','nopromote':true},
+      {'name':'=','nopromote':true},
       {'name':',','nopromote':true},
       {'name':'<'},
       {'name':'>'},
-      {'name':'='},
+      {'name':'=='},
       {'name':'+'},
       {'name':'-','unary':false},
       {'name':'*'},
@@ -120,7 +120,7 @@ com.lightandmatter.Parser =
             var function_def = ''; // ='f' for function definition f x : x^2
             var bound_var = '';
             var clobbered; // normally stays undefined; if defining f x, x may also be a defined variable, so save its value
-            if (name==':' && j==start+2) {
+            if (name=='=' && j==start+2) {
               function_def=tokens[start];
               bound_var=tokens[start+1];
               this.delete_function(function_def);
@@ -239,7 +239,7 @@ com.lightandmatter.Parser =
         var end = tree[5];
         var ca = false;
         if (lhs[7]!==undefined && lhs[7].closed_array===true) {ca=true;}
-        var function_def = op==':' && rhs[0]=='lambda';
+        var function_def = op=='=' && rhs[0]=='lambda';
         var a;
         var b;
         if (!function_def) {
@@ -247,11 +247,11 @@ com.lightandmatter.Parser =
           //   In an assignment, don't even try to evaluate the left-hand side; even if we tried to evaluate it after the rhs, it would cause errors if
           //             if was a function definition, because the dummy var is undefined.
           //   In a ; operator, we need to evaluate the lhs first, because it may have side-effects such as assignment.
-          if (op!=':') {a = this.tree_to_string(lhs);} 
+          if (op!='=') {a = this.tree_to_string(lhs);} 
           b = this.tree_to_string(rhs);
           if (b===null) {this.errs.push(["Nothing is on the right-hand side of the operator "+op+" in the expression ",start,end]); return null;}
         }
-        if (op==':') {
+        if (op=='=') {
           if (lhs[0] != 'leaf' || lhs[2].name===null) {
             this.errs.push(["The left-hand side of the assignment statement is not a valid name for a variable or function."],start,end);
             return null;

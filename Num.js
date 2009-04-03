@@ -88,12 +88,12 @@ com.lightandmatter.Num.binop = function(op,a,b,options) { // options arg is opti
             return [a,b];
           }
         }
-        if (op=='=') { // Complexes have = but not cmp; arrays have =.
+        if (op=='==') { // Complexes have == but not cmp; arrays have ==.
           if (t=='r') {return a==b;}
           if (t=='a') {
             if (a.length!=b.length) {return false;}
             for (var i in a) {
-              if (!nn.binop('=',a[i],b[i])) {return false;}
+              if (!nn.binop('==',a[i],b[i])) {return false;}
             }
             return true;
           }

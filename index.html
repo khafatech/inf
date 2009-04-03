@@ -6,8 +6,7 @@
 <body onload = "set_up();">
 
 <h1>Inf</h1>
-<p>Inf is a calculator that can handle infinite and infinitesimal numbers. This is an early alpha release, and it's more likely
-to work well in Firefox than in Internet Explorer.
+<p>Inf is a calculator that can handle infinite and infinitesimal numbers.
 Type an expression at the &gt; prompt and hit Enter. For more documentation, scroll down. </p>
 
 <div id="debug"></div>
@@ -66,10 +65,10 @@ Built-in operators:
 <ul>
 <li> +, -, *, / -- arithmetic
 <li> ^ -- exponentiation
-<li> =, <, > -- comparisons
+<li> <, >, == -- comparisons
 <li> ; -- separates multiple statements on the same line
 <li> , -- builds arrays, e.g., (1,2)
-<li> : -- assigns the expression on the right to the variable named on the left-hand side
+<li> = -- assigns the expression on the right to the variable named on the left-hand side
 <li> ()[]{} -- All three styles of parentheses can be used.
 </ul>
 <p>
@@ -87,8 +86,11 @@ Built-in functions:
 User-defined functions:
 </p>
 <ul>
-<li> f x: x^2
+<li> f x = x^2
 </ul>
+<p>
+You can use up-arrow and down-arrow to get back lines you've typed in previously.
+</p>
 <p>
 Inf represents infinite and infinitesimal quantities as <a href="http://en.wikipedia.org/wiki/Levi-Civita_field">Levi-Civita numbers</a>.
 The Levi-Civita numbers obey all the same <a href="http://en.wikipedia.org/wiki/First-order_logic">elementary</a> axioms of arithmetic as the real numbers.

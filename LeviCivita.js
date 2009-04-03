@@ -50,8 +50,8 @@ com.lightandmatter.LeviCivita =
           if (c.nn.num_type(coeff)!='r' && s.length>1) {
             s = '('+s+')';
           }
-          var p0 = c.nn.binop('=',power,0);
-          var p1 = c.nn.binop('=',power,1);
+          var p0 = c.nn.binop('==',power,0);
+          var p1 = c.nn.binop('==',power,1);
           if (s=='1' && !p0) {s='';}
           if (s=='-1' && !p0) {s='-';}
           if (!p0) {s = s + 'd';}
@@ -94,8 +94,8 @@ com.lightandmatter.LeviCivita =
       if (c.l != b.l) {return false;}
       if (c.s.length != b.s.length) {return false;}
       for (var i in c.s) {
-        if (!c.nn.binop('=',c.s[i][0],b.s[i][0])) {return false;}
-        if (!c.nn.binop('=',c.s[i][1],b.s[i][1])) {return false;}
+        if (!c.nn.binop('==',c.s[i][0],b.s[i][0])) {return false;}
+        if (!c.nn.binop('==',c.s[i][1],b.s[i][1])) {return false;}
       }
       return true;
     };
