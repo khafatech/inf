@@ -42,6 +42,7 @@
 // - The default in Firefox, for example, is to have a serif font for html text, and sans serif for user input. This would make
 //   the user's input suddenly change in style as it scrolled upward after the user hit enter. To avoid this, the default is
 //   to set serif as the input style.
+// Emacs keybindings: ctl-p works in firefox without firemacs, doesn't work with firemacs. Doesn't work with konqueror. Works in galeon.
 //
 // To do:
 //   Provide a way for the user to clear the terminal, and call a handler routine when that happens.
@@ -110,12 +111,15 @@ com.lightandmatter.Terminal =
       try { code = e.charCode; } catch (foo) {}
       try { code = e.keyCode;  } catch (foo) {}
       if (code==0) {try { code = e.which;  } catch (foo) {}} // necessary for ctl keys in FF
+      var special = false;
+      try {special=(e.which!==undefined && e.which===0)} catch (foo) {}
       var enter = 13; // unicode for enter key
+      // Most browsers don't generate a keypress for arrow keys. Firefox does.
       var up_arrow = 38;
       var down_arrow = 40;
       var ch = String.fromCharCode(code);
-      var go_up = (e.ctrlKey && ch=='p') || (code==up_arrow);
-      var go_down = (e.ctrlKey && ch=='n') || (code==down_arrow);
+      var go_up = special && ((e.ctrlKey && ch=='p') || (code==up_arrow));
+      var go_down = special && ((e.ctrlKey && ch=='n') || (code==down_arrow));
       if (go_up || go_down) {
         if (go_up) {t.in_history --;}
         if (go_down) {t.in_history ++;}

@@ -163,12 +163,36 @@ com.lightandmatter.Num.is_zero = function(c) {
     };
 
 com.lightandmatter.Num.is_real = function(c) {
-      //return true;
       var t = com.lightandmatter.Num.num_type(c);
       if (t=='r') {return true;}
       if (t=='c') {return c.y===0;}
       if (t=='q') {return true;}
       if (t=='l') {return c.is_real();}
+    };
+
+com.lightandmatter.Num.convert_to_string = function(x) {
+      var t = com.lightandmatter.Num.num_type(x);
+      if (t=='r') {
+        s = x.toString();
+        if (x!=Math.floor(x)) {
+          try { // toExponential and toFixed don't exist before JS 1.5
+            var prec = com.lightandmatter.Num.precision;
+            var a = Math.abs(x);
+            if (a>1e-4 && a<1e4) {
+              s=x.toFixed(prec);
+            }
+            else {
+              s=x.toExponential(prec);
+            }
+          }
+          catch(foo) {}
+        }
+        s = s.replace(/NaN/,"undefined");
+        return s;
+      }
+      else {
+        return x.toString();
+      }      
     };
 
 // typically we promote to the "higher" type:
@@ -179,3 +203,5 @@ com.lightandmatter.Num.height = function (t) {
 com.lightandmatter.Num.debug = function(s) {
       document.getElementById("debug").innerHTML=document.getElementById("debug").innerHTML+' '+s+' ';
     };
+
+com.lightandmatter.Num.precision = 5; // number of digits of precision to maintain on output

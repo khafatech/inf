@@ -47,6 +47,8 @@ Type an expression at the &gt; prompt and hit Enter. For more documentation, scr
 
 <h2>About Inf</h2>
 
+<h3>Basic use</h3>
+
 <p>
 Inf is a calculator that can handle infinite and infinitesimal numbers.
 </p>
@@ -54,10 +56,9 @@ Inf is a calculator that can handle infinite and infinitesimal numbers.
 Special constants and variables:
 </p>
 <ul>
-<li> i -- the square root of -1
-<li> pi -- the ratio of a circle's circumference to its diameter
 <li> d -- an infinitesimally small number
-<li> levi_civita_n -- sets the number of terms to maintain in series expansions of Levi-Civita numbers
+<li> pi -- the ratio of a circle's circumference to its diameter
+<li> i -- the square root of -1
 </ul>
 <p>
 Built-in operators:
@@ -79,18 +80,7 @@ Built-in functions:
 <li> asin, acos, atan
 <li> sqrt, abs
 <li> exp, ln
-<li> floor, ceil
-<li> array -- converts a Levi-Civita number, complex number, or rational number to a representation in terms of an array
 </ul>
-<p>
-User-defined functions:
-</p>
-<ul>
-<li> f x = x^2
-</ul>
-<p>
-You can use up-arrow and down-arrow to get back lines you've typed in previously.
-</p>
 <p>
 Inf represents infinite and infinitesimal quantities as <a href="http://en.wikipedia.org/wiki/Levi-Civita_field">Levi-Civita numbers</a>.
 The Levi-Civita numbers obey all the same <a href="http://en.wikipedia.org/wiki/First-order_logic">elementary</a> axioms of arithmetic as the real numbers.
@@ -131,6 +121,31 @@ no reason to shy away from them.
 To learn more about the application of infinitesimals
 to calculus, see my <a href="http://www.lightandmatter.com/calc/">free calculus book</a>.
 </p>
+<h3>Fancy features</h3>
+<p>
+More special variables:
+</p>
+<ul>
+<li> levi_civita_n -- sets the number of terms to maintain in series expansions of Levi-Civita numbers
+<li> precision -- sets the number of digits of precision to print in output
+</ul>
+<p>
+More built-in functions:
+</p>
+<ul>
+<li> floor, ceil
+<li> array -- converts a Levi-Civita number, complex number, or rational number to a representation in terms of an array
+</ul>
+<p>
+User-defined functions:
+</p>
+<ul>
+<li> f x = x^2
+</ul>
+<p>
+You can use up-arrow and down-arrow to get back lines you've typed in previously.
+</p>
+
 <h2>Open source</h2>
 <p>
 Inf is open source software by <a href="http://www.lightandmatter.com/area4author.html">Ben Crowell</a>

@@ -15,11 +15,7 @@
 //      lc_lambda z = lambda "order of magnitude" operator
 //      array z = list of lists of q's and a_q's.
 //      These would be useful in the test suite.
-//    Array thing is awkward right now because I don't have any easy way to form nested lists syntactically;
-//               can do (1,(2,3)), but because it's left-associative, ((1,2),(3,4)) evaluates to [1,2,[3,4]].
-//               This makes it impossible to use arrays to check LC numbers in test suite, which was the main application of arrays I had in mind.
-//               Possible solution is to have a flatten operator. I'm not clear on how to implement something like JS's [[1,2],[3,4]] in my parser,
-//               and I'm not sure I want to dedicate square brackets to this purpose. I can stick dummy elements on the front, like (0,(1,2)), but that's lame.
+//      It's awkward and wrong that the code for evaluating the parse tree is in Parser. It should be in its own module.
 
 var com;
 if (!com) {com = {};}
@@ -73,7 +69,8 @@ com.lightandmatter.Parser =
     };
     // get and set the variable by calling this function rather that by looking something up in the symbol table:
     this.sym_side_effect = {
-      'levi_civita_n':com.lightandmatter.LeviCivita.change_n
+      'levi_civita_n':com.lightandmatter.LeviCivita.change_n,
+      'precision':function (p) {com.lightandmatter.Num.precision = p;}
     };
     this.builtin_constants = {}; // They're not allowed to overwrite these.
     for (var builtin in this.sym) {
@@ -198,8 +195,7 @@ com.lightandmatter.Parser =
         // Intervene to keep it from flattening arrays of arrays, which is what toString() normally does on arrays.
         s = this.array_to_string(s);
       }
-      s = s.toString().replace(/NaN/,"undefined");
-      return s;
+      return com.lightandmatter.Num.convert_to_string(s);
     };
 
     this.array_to_string = function(a) {
