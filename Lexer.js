@@ -45,4 +45,9 @@ com.lightandmatter.Lexer =
         return '';
       }
     };
+
+    function debug(s) {
+      document.getElementById("debug").innerHTML=document.getElementById("debug").innerHTML+' '+s+' ';
+    };
+
   };

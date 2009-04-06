@@ -117,7 +117,11 @@ com.lightandmatter.LeviCivita =
       if (!(c.is_real() && b.is_real())) {return null;}
       if (c.f===0 && b.f===0) {return 0;}
       if ((c.f===0 && b.f!==0) || (c.f!==0 && b.f===0)) {return c.nn.binop('cmp',c.f,b.f);}
-      // From this point on, we know they're both real, and both nonzero.
+      // From this point on, we know they're both real (not complex), and both nonzero.
+      if (c.f<0 && b.f>0) {return -1;}
+      if (c.f>0 && b.f<0) {return 1;}
+      if (c.f<0 && b.f<0) {return -c.neg().cmp(b.neg());}
+      // From this point on, we know they're both real (not complex), and both positive.
       var ll = c.nn.binop('cmp',c.l,b.l);
       if (ll!==0) {return -ll;}
       var ff = c.nn.binop('cmp',c.f,b.f);

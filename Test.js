@@ -25,12 +25,16 @@ com.lightandmatter.Test =
                        // The magnitude of the difference between the results should be no more than eps.
                        // Eps defaults to 10^-12.
                        ["2+2",4],
-                       ["2d",null],
                        ["1<3",true],
                        ["1>3",false],
+                       ["2d",null],
                        ["1+d"],
                        ["1/d"],
                        ["d+d","2*d"],
+                       ["d<0",false],
+                       ["d<-1",false],
+                       ["-d>-1",true],
+                       ["d<10^-10",true],
                        ["d^2<d",true],
                        ["sqrt d > d",true],
                        ["2*d>d",true],

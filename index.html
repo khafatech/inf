@@ -7,7 +7,7 @@
 
 <h1>Inf</h1>
 <p>Inf is a calculator that can handle infinite and infinitesimal numbers.
-Type an expression at the &gt; prompt and hit Enter. For more documentation, scroll down. </p>
+Type an expression at the : prompt and hit Enter. For more documentation, scroll down. </p>
 
 <div id="debug"></div>
 <div id="debug2"></div>
@@ -28,6 +28,7 @@ Type an expression at the &gt; prompt and hit Enter. For more documentation, scr
       var parser = new com.lightandmatter.Parser({});
       var terminal = new com.lightandmatter.Terminal({
         'container':document.getElementById("terminal"),
+        'prompt':': ',
         'response':(function(terminal) {
           parser.parse(lexer.tokens,lexer.props);
           //return "Your input was "+parser.to_debug_string()+' -->> '+parser.toString();
@@ -66,10 +67,7 @@ Built-in operators:
 <ul>
 <li> +, -, *, / -- arithmetic
 <li> ^ -- exponentiation
-<li> <, >, == -- comparisons
-<li> ; -- separates multiple statements on the same line
-<li> , -- builds arrays, e.g., (1,2)
-<li> = -- assigns the expression on the right to the variable named on the left-hand side
+<li> &lt;, >, == -- comparisons (note the double equals sign to test for equality)
 <li> ()[]{} -- All three styles of parentheses can be used.
 </ul>
 <p>
@@ -83,6 +81,20 @@ Built-in functions:
 </ul>
 <p>
 Inf represents infinite and infinitesimal quantities as <a href="http://en.wikipedia.org/wiki/Levi-Civita_field">Levi-Civita numbers</a>.
+Calculus students often get the impression that the notion of an infinite or infinitesimal number can never be defined in any rigorous or
+self-consistent way. That's not true. Tullio Levi-Civita defined the Levi-Civita numbers around 1900, so it's been known for over a
+century that there were rigorously definable number systems that included infinities. 
+Great mathematicians like Newton, Gauss, and Euler used
+infinitesimals, and now that modern mathematicians have put them on a more rigorous footing, there's
+no reason to shy away from them.
+To learn more about the application of infinitesimals
+to calculus, see my <a href="http://www.lightandmatter.com/calc/">free calculus book</a>.
+If you've ended up here because the calculus book tells you about the calculator, one thing you should realize is that the Levi-Civita
+numbers used by Inf are not the full hyperreal number system referred to in the book. They are a subset of them, in the same way
+that the rational numbers are a subset of the real numbers. This is why certain calculations give an error
+in the calculator, even though they are well defined in the hyperreals.
+</p>
+<p>
 The Levi-Civita numbers obey all the same <a href="http://en.wikipedia.org/wiki/First-order_logic">elementary</a> axioms of arithmetic as the real numbers.
 If you try evaluating the expression 1/0, you'll see that it comes up as undefined, not an infinite number. This is because one of the elementary
 axioms of arithmetic is that division by zero is undefined. To get an infinite result, you could do something like 1/d, where d is the symbol
@@ -96,30 +108,24 @@ Here are some examples you can try in the calculator to get a feeling for how al
 </p>
 <ul>
 <li> 1/0 ... undefined
-<li> 1/d ... gives an infinite result
-<li> 2/d ... a bigger infinity
-<li> 2/d+1 ... and an even bigger infinity
 <li> d>0 ... true
-<li> d<10^-10 ... true
-<li> d^2&lt;d ... true, showing that we have different sizes of infinity
+<li> d&lt;10^-10 ... true, because in fact d is smaller than any positive real number
+<li> d^2&lt;d ... true, showing that we have different sizes of infinitesimals
 <li> d^2&gt;0 ... true, because even though d^2 is infinitesimally small compared to d, it's still no zero
 <li> sqrt(d)
 <li> sqrt(d)>d ... true
+<li> 1/d ... gives an infinite result
+<li> 2/d>1/d ... true, because 2/d is a bigger infinity than 1/d
+<li> 2/d+1>2/d ... and an even bigger infinity
 <li> 1/(1-d) ... is calculated using the <a href="http://en.wikipedia.org/wiki/Geometric_series">geometric series</a>, up to a certain level of precision
 <li> exp(d) ... is calculated using a <a href="http://en.wikipedia.org/wiki/Taylor_series">Taylor series</a>
 <li> exp(1/d) ... is undefined in the Levi-Civita system
 </ul>
 <p>
-Calculus students often get the impression that the notion of an infinite or infinitesimal number can never be defined in any rigorous or
-self-consistent way. That's not true. Tullio Levi-Civita defined the Levi-Civita numbers around 1900, so it's been known for over a
-century that there were rigorously definable number systems that included infinities. Abraham Robinson defined another such number system,
-the hyperreal numbers, around 1960. The hyperreals match the properties of the real numbers even better than the Levi-Civita numbers do.
+The undefined result for exp(1/d) is an example of how the Levi-Civita numbers are a smaller system than the hyperreals,
+which were defined by Abraham Robinson around 1960. The hyperreals match the properties of the real numbers even better than the Levi-Civita numbers do.
 For example, the exponential function can take a positive infinite argument in the hyperreal system, but that doesn't work in the Levi-Civita
-numbers. However, the hyperreals cannot be conveniently represented on a computer. Great mathematicians like Newton, Gauss, and Euler used
-infinitesimals, and now that modern mathematicians like Levi-Civita and Robinson have put infinitesimals on a more rigorous footing, there's
-no reason to shy away from them.
-To learn more about the application of infinitesimals
-to calculus, see my <a href="http://www.lightandmatter.com/calc/">free calculus book</a>.
+numbers. However, the hyperreals cannot be conveniently represented on a computer. 
 </p>
 <h3>Fancy features</h3>
 <p>
@@ -130,10 +136,19 @@ More special variables:
 <li> precision -- sets the number of digits of precision to print in output
 </ul>
 <p>
+More built-in operators:
+</p>
+<ul>
+<li> ; -- separates multiple statements on the same line
+<li> , -- builds arrays, e.g., (1,2)
+<li> = -- assigns the expression on the right to the variable named on the left-hand side
+
+</ul>
+<p>
 More built-in functions:
 </p>
 <ul>
-<li> floor, ceil
+<li> floor, ceil -- round down or up to an integer
 <li> array -- converts a Levi-Civita number, complex number, or rational number to a representation in terms of an array
 </ul>
 <p>
@@ -143,7 +158,8 @@ User-defined functions:
 <li> f x = x^2
 </ul>
 <p>
-You can use up-arrow and down-arrow to get back lines you've typed in previously.
+In Firefox, you can use up-arrow and down-arrow to get back lines you've typed in previously. Depending on your browser,
+it may also be possible to accomplish this using control-P and control-N.
 </p>
 
 <h2>Open source</h2>

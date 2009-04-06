@@ -81,7 +81,7 @@ com.lightandmatter.Parser =
       this.errs = [];
       this.tokens = tokens; // used only for error reporting
       this.props = props;
-      this.tree = this.parse_part(tokens,0,tokens.length-1);
+      if (tokens!==null) {this.tree = this.parse_part(tokens,0,tokens.length-1);}
     };
 
     this.parse_part = function(tokens,start,end) {
@@ -212,7 +212,7 @@ com.lightandmatter.Parser =
     };
 
     this.tree_to_string = function(tree) { // badly named, doesn't really compute string
-      if (tree===null) {return null;}
+      if (tree===null || tree===undefined) {return null;}
       var what = tree[0];
       if (what==='leaf') {
         var props = tree[2];

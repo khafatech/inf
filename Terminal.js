@@ -128,6 +128,7 @@ com.lightandmatter.Terminal =
         if (t.in_history<t.history.length) {this.value = t.history[t.in_history];}
         if (t.in_history==t.history.length) {this.value = '';}
       }
+      t.when_changed(this.value);
       if (code==enter) {
         var u = this.value;  // user's input, not including the most recent character
         u = u.replace(new RegExp("<","g"),"&lt;");
@@ -147,4 +148,7 @@ com.lightandmatter.Terminal =
       t.when_changed(this.value);
     };
     inp.focus();
+    function debug(s) {
+      document.getElementById("debug").innerHTML=document.getElementById("debug").innerHTML+' '+s+' ';
+    };
   };
